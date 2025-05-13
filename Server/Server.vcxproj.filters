@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="ServerObject.cpp">
+      <Filter>01. ServerObjectManager\00. ServerObject</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerObjectManager.cpp">
+      <Filter>01. ServerObjectManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Board.cpp">
+      <Filter>02. Board</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet.cpp">
+      <Filter>03. Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>98. Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="Session.cpp">
+      <Filter>01. SessionManager\00. Session</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionManager.cpp">
+      <Filter>01. SessionManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOContext.cpp">
+      <Filter>02. IOContext</Filter>
+    </ClCompile>
+    <ClCompile Include="RecvBuffer.cpp">
+      <Filter>04. RecvBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerManager.cpp">
+      <Filter>00. ServerManager</Filter>
+    </ClCompile>
+    <ClCompile Include="IOCPRegistrable.cpp">
+      <Filter>03. IOCPRegistrable</Filter>
+    </ClCompile>
+    <ClCompile Include="Listener.cpp">
+      <Filter>02. Listener</Filter>
+    </ClCompile>
+    <ClCompile Include="IOCPCore.cpp">
+      <Filter>05. IocpCore</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
+      <Filter>97. ThreadPool</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>00. ServerManager</Filter>
+    </ClCompile>
+    <ClCompile Include="SendBuffer.cpp">
+      <Filter>05. SendBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Sector.cpp">
+      <Filter>02. Board\00. Sector</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ServerObject.h">
+      <Filter>01. ServerObjectManager\00. ServerObject</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerObjectManager.h">
+      <Filter>01. ServerObjectManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Board.h">
+      <Filter>02. Board</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet.h">
+      <Filter>03. Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Singleton.hpp">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>01. SessionManager\00. Session</Filter>
+    </ClInclude>
+    <ClInclude Include="SessionManager.h">
+      <Filter>01. SessionManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOContext.h">
+      <Filter>02. IOContext</Filter>
+    </ClInclude>
+    <ClInclude Include="RecvBuffer.h">
+      <Filter>04. RecvBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerManager.h">
+      <Filter>00. ServerManager</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCPRegistrable.h">
+      <Filter>03. IOCPRegistrable</Filter>
+    </ClInclude>
+    <ClInclude Include="Listener.h">
+      <Filter>02. Listener</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCPCore.h">
+      <Filter>05. IocpCore</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadPool.h">
+      <Filter>97. ThreadPool</Filter>
+    </ClInclude>
+    <ClInclude Include="protocol.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SendBuffer.h">
+      <Filter>05. SendBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Sector.h">
+      <Filter>02. Board\00. Sector</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="01. ServerObjectManager">
+      <UniqueIdentifier>{11326120-e169-4ae7-8681-9007fb8ee9b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. ServerObjectManager\00. ServerObject">
+      <UniqueIdentifier>{de86c58d-ef18-4020-ab0c-a5b42f750204}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Board">
+      <UniqueIdentifier>{3d5dd3f1-a395-48b7-9d58-83af458a1a2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packet">
+      <UniqueIdentifier>{4aac7b51-f931-4458-92e9-d1b6917a3047}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="99. Utils">
+      <UniqueIdentifier>{a3b57699-e6ca-4ba7-9d17-4585733a6150}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="98. Headers">
+      <UniqueIdentifier>{f278088d-61c2-4812-894b-b6f59e2339d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager">
+      <UniqueIdentifier>{6c87b71b-e71f-4777-b5e4-436d853874fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager\00. Session">
+      <UniqueIdentifier>{1e381732-2f63-4983-9478-dbc09905d1fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. IOContext">
+      <UniqueIdentifier>{83bf8cc9-8e87-4a44-a3b9-4f0d8d6bd13c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. RecvBuffer">
+      <UniqueIdentifier>{adca6189-5fb9-425e-8c53-7c2f82252c80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. IocpCore">
+      <UniqueIdentifier>{7ab7f9e9-94f0-4d37-80a3-3c8616e827d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. ServerManager">
+      <UniqueIdentifier>{0ac924b3-ba1d-4eef-a5fc-318111cceb1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. IOCPRegistrable">
+      <UniqueIdentifier>{09a7b9cd-1db4-4513-9260-f8cff4d3b1e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. ThreadPool">
+      <UniqueIdentifier>{149578ff-7cd3-4a01-8133-6860af624b8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Listener">
+      <UniqueIdentifier>{64cf26c0-5723-4c83-802c-354b9f19be45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. SendBuffer">
+      <UniqueIdentifier>{1349fb22-f8aa-4ef5-9b70-9c2992033db4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Board\00. Sector">
+      <UniqueIdentifier>{e117bdae-4492-47c7-9bf4-51c94a5b680c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
