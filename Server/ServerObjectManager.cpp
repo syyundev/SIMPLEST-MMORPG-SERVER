@@ -2,21 +2,27 @@
 #include "ServerObjectManager.h"
 
 #include "ServerObject.h"
+#include "Board.h"
+#include "Sector.h"
+#include "SessionManager.h"
+#include "Session.h"
 
 void ServerObjectManager::AddServerObject(shared_ptr<ServerObject> gameObject)
 {
-	const uint64_t id = gameObject->GetID();
-
-	if(m_serverObject.end() != m_serverObject.find(id))
-		return;
+	const int id = gameObject->GetID();
 
 	m_serverObject.insert(make_pair(id, std::move(gameObject)));
 }
 
-shared_ptr<ServerObject> ServerObjectManager::GetGameObject(const uint64_t id)
+shared_ptr<ServerObject> ServerObjectManager::GetGameObject(const int id)
 {
-	if(m_serverObject.end() == m_serverObject.find(id))
-		return nullptr;
+	auto it = m_serverObject.find(id);
+	if(it != m_serverObject.end())
+		return it->second;   
+	return nullptr;
+}
 
-	return m_serverObject[id];
+void ServerObjectManager::RemoveServerObject(const int id)
+{
+	m_serverObject.at(id) = nullptr;
 }

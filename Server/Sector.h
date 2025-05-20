@@ -1,6 +1,6 @@
 #pragma once
 
-class Session;
+class ServerObject;
 
 class Sector {
 private:
@@ -8,20 +8,16 @@ private:
 	int mID;
 
 public:
-	mutex mSecLock;
-	//concurrency::concurrent_unordered_set<int> mSessions;
-	//concurrency::concurrent_unordered_set<int> mSessions;
-	unordered_set<int> mSessions;
+	mutex			m_mutex;
+	unordered_set<int>		m_serverObjectsList;
 
 public:
 	explicit Sector(const int indexX, const int indexY);
 
 public:	
-	void lock() { mSecLock.lock(); }
-	void unlock() { mSecLock.unlock(); }
 	void Add(const int id);
 	void Remove(const int id);
-	shared_ptr<Session> FindSession(const int id);
+	unordered_set<int> GetObjList()  noexcept;
 	int GetID() const noexcept { return mID; }
 };
 

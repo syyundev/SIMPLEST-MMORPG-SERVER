@@ -8,28 +8,25 @@ class Board : public Singleton<Board> {
 	SINGLETON(Board)
 
 public:
-	static constexpr int			BOARD_WIDTH = 400;
-	static constexpr int			BOARD_HEIGHT = 400;
+	static constexpr short			BOARD_WIDTH = 2000;
+	static constexpr short			BOARD_HEIGHT = 2000;
 	static constexpr unsigned char	SQUARE_SIZE = 80;
 	
-	static constexpr int			SECTOR_SIZE = 10;
-	static constexpr int			SECTOR_COUNT_X = (BOARD_WIDTH + SECTOR_SIZE - 1) / SECTOR_SIZE;
-	static constexpr int			SECTOR_COUNT_Y = (BOARD_HEIGHT + SECTOR_SIZE -1) / SECTOR_SIZE;
-
-public:
-	std::array<std::array<int, BOARD_WIDTH>, BOARD_HEIGHT>	m_boards;
+	static constexpr short			SECTOR_SIZE = 10;
+	static constexpr short			SECTOR_X_COUNT = (BOARD_WIDTH + SECTOR_SIZE - 1) / SECTOR_SIZE;
+	static constexpr short			SECTOR_Y_COUNT = (BOARD_HEIGHT + SECTOR_SIZE -1) / SECTOR_SIZE;
 	
-	// 읽기만 할거니까 shared
-	std::array<std::array<shared_ptr<Sector>, SECTOR_COUNT_X>, SECTOR_COUNT_Y> mSectors;
+public:
+	std::array<std::array<shared_ptr<Sector>, SECTOR_X_COUNT>, SECTOR_Y_COUNT> mSectors;
+	unordered_map<int, shared_ptr<Sector>> m_hash;
 
 public:
-	bool CanGo(const Vec2Int pos);
+	bool CanGo(const Pos pos);
 	void MakeSectors();
-	shared_ptr<Sector> GetSector(const int posX, const int posY);
+	shared_ptr<Sector> GetSector(const Pos pos);
 	shared_ptr<Sector> GetSector(const int sectorID);
-	int GetSectorX(const int posX) { return posX / SECTOR_SIZE; }
-	int GetSectorY(const int posY) { return  posY / SECTOR_SIZE; }
-	// 시야반경 안에 있는 인접 Sector들, 나의 섹터 포함
-	std::unordered_set<int> GetNeighborSector(const int x, const int y);
+	Pos GetSectorPos(const Pos pos) { return Pos{ static_cast<short>(pos.x / SECTOR_SIZE), static_cast<short>(pos.y / SECTOR_SIZE )}; }
+	std::unordered_set<int> GetNeighborSectorList(const Pos pos);
+	bool CanSee(const Pos from, const Pos to);
 };
 

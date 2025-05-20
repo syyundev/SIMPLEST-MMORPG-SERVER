@@ -3,7 +3,7 @@
 
 #include "Sector.h"
 
-bool Board::CanGo(const Vec2Int pos)
+bool Board::CanGo(const Pos pos)
 {
 	if(pos.x < 0 || pos.x >= BOARD_WIDTH || pos.y < 0 || pos.y >= Board::BOARD_HEIGHT)
 		return false;
@@ -13,61 +13,66 @@ bool Board::CanGo(const Vec2Int pos)
 
 void Board::MakeSectors()
 {
-	// Sector »ý¼º
-	for(int y = 0; y < SECTOR_COUNT_X; ++y) {
-		for(int x = 0; x < SECTOR_COUNT_Y; ++x) {
-			mSectors[y][x] = make_shared<Sector>(x, y);
+	for(int y = 0; y < SECTOR_Y_COUNT; ++y) {
+		for(int x = 0; x < SECTOR_X_COUNT; ++x) {
+			auto sector = make_shared<Sector>(x, y);
+			mSectors[y][x] = sector;
+			m_hash[sector->GetID()] = sector;
 		}
 	}
 }
 
-shared_ptr<Sector> Board::GetSector(const int posX, const int posY)
+shared_ptr<Sector> Board::GetSector(const Pos pos)
 {
-	const int x =	posX	 / SECTOR_SIZE;
-	const int y =	posY	/ SECTOR_SIZE;
+	const short x = pos.x / SECTOR_SIZE;
+	const short y = pos.y / SECTOR_SIZE;
 
-	if(x < 0 || x >= SECTOR_COUNT_X)
+	if(x < 0 || x >= SECTOR_X_COUNT)
 		return nullptr;
-	if(y< 0 || y >= SECTOR_COUNT_Y)
+	if(y < 0 || y >= SECTOR_Y_COUNT)
 		return nullptr;
-
 
 	return mSectors[y][x];
 }
 
 shared_ptr<Sector> Board::GetSector(const int sectorID)
 {
-	for(int y = 0; y < SECTOR_COUNT_Y; ++y) {
-		for(int x = 0; x < SECTOR_COUNT_X; ++x) {
-			if(sectorID == mSectors[y][x]->GetID())
-				return mSectors[y][x];
-		}
-	}
+	return m_hash[sectorID];
 }
 
-std::unordered_set<int> Board::GetNeighborSector(const int x, const int y)
+std::unordered_set<int> Board::GetNeighborSectorList(const Pos pos)
 {
 	unordered_set<int> neighborSecList;
 
-	pair<int, int> checkX{ x - VIEW_RANGE, x + VIEW_RANGE };
-	pair<int, int> checkY{ y - VIEW_RANGE, y + VIEW_RANGE };
+	const int minViewX{ std::max(0, pos.x - VIEW_RANGE) };
+	const int maxViewX{ std::min(W_WIDTH - 1, pos.x + VIEW_RANGE) };
+	const int minViewY{ std::max(0, pos.y - VIEW_RANGE) };
+	const int maxViewY{ std::min(W_HEIGHT-1, pos.y + VIEW_RANGE) };
 
-	for(int y = checkY.first; y <= checkY.second; ++y) {
-		for(int x = checkX.first; x <= checkX.second; ++x) {
+	int minSecX = minViewX / Board::SECTOR_SIZE;
+	int maxSecX = maxViewX / Board::SECTOR_SIZE;
+	int minSecY = minViewY / Board::SECTOR_SIZE;
+	int maxSecY = maxViewY / Board::SECTOR_SIZE;
 
-			if(x < 0 || y < 0 || x >= Board::BOARD_WIDTH || y >= Board::BOARD_HEIGHT)
-				continue;
+	minSecX = std::max(0, minSecX);
+	maxSecX = std::min(Board::SECTOR_X_COUNT - 1, maxSecX);
+	minSecY = std::max(0, minSecY);
+	maxSecY = std::min(Board::SECTOR_Y_COUNT - 1, maxSecY);
 
-			const int secX = GetSectorX(x);
-			const int secY = GetSectorX(y);
-
-			const int secID = mSectors[secY][secX]->GetID();
-
-			if(neighborSecList.count(secID) == 0) {
+	for(int sy = minSecY; sy <= maxSecY; ++sy) {
+		for(int sx = minSecX; sx <= maxSecX; ++sx) {
+			const int secID = mSectors[sy][sx]->GetID();
+			if(neighborSecList.find(secID) == neighborSecList.end()) {
 				neighborSecList.insert(secID);
 			}
 		}
 	}
 
 	return neighborSecList;
+}
+
+bool Board::CanSee(const Pos from, const Pos to)
+{
+	if(abs(from.x - to.x) > VIEW_RANGE) return false;
+	return abs(from.y - to.y) <= VIEW_RANGE;
 }

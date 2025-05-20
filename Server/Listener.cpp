@@ -30,16 +30,6 @@ bool Listener::Init()
 		mServerAddr.sin_port = htons(PORT_NUM);
 		mServerAddr.sin_addr.S_un.S_addr = INADDR_ANY;
 
-		//bool flag{ true };
-		//if(SOCKET_ERROR == setsockopt(mSocket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&flag), sizeof(flag)))
-		//	return false;
-
-		//LINGER option;
-		//option.l_onoff = 0;
-		//option.l_linger = 0;
-		//if(SOCKET_ERROR == setsockopt(mSocket, SOL_SOCKET, SO_LINGER, reinterpret_cast<const char*>(&option), sizeof(option)))
-		//	return false;
-
 		if(SOCKET_ERROR == ::bind(mSocket, reinterpret_cast<sockaddr*>(&mServerAddr), sizeof(mServerAddr)))
 			return false;
 
@@ -54,7 +44,7 @@ bool Listener::Init()
 void Listener::ProcessIOCompletion(IOContext* ioContext, const DWORD numOfBytes)
 {
 	assert(IO_CONTEXT_TYPE::ACCEPT == ioContext->contextType);
-	AcceptContext*  acceptContext = static_cast<AcceptContext*>(ioContext);
+	AcceptContext* acceptContext = static_cast<AcceptContext*>(ioContext);
 	ProcessAccept(acceptContext);
 }
 
@@ -80,7 +70,7 @@ void Listener::ProcessAccept(AcceptContext* acceptContext)
 	if(false == MANAGER(IOCPCore)->Regist(acceptSocket))
 		assert(nullptr);
 
-	// TODO: SessionPoolø°º≠ ººº« π›≥≥«ÿ¡‡æﬂ«‘.
+
 	shared_ptr<Session> newSession = make_shared<Session>(acceptSocket);
 
 	if(SOCKET_ERROR == setsockopt(newSession->GetSocket(), SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, reinterpret_cast<const char*>(&mSocket), sizeof(mSocket))) {
@@ -90,14 +80,14 @@ void Listener::ProcessAccept(AcceptContext* acceptContext)
 
 	SOCKADDR_IN sockAddress;
 	int sizeOfSockAddr = sizeof(sockAddress);
-	if(SOCKET_ERROR == ::getpeername(newSession->GetSocket(), OUT reinterpret_cast<SOCKADDR*>(&sockAddress), &sizeOfSockAddr)){
+	if(SOCKET_ERROR == ::getpeername(newSession->GetSocket(), OUT reinterpret_cast<SOCKADDR*>(&sockAddress), &sizeOfSockAddr)) {
 		RegistAccept();
 		return;
 	}
 
 	newSession->SetSockAddrIn(sockAddress);
 	newSession->ProcessConnect();
-	MANAGER(SessionManager)->AddSession(newSession);
+	MANAGER(SessionManager)->AddSession(std::move(newSession));
 
 	RegistAccept();
 }

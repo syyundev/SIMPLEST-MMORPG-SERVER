@@ -7,8 +7,8 @@ class Listener;
 class ServerManager : public Singleton<ServerManager> {
 	SINGLETON(ServerManager)
 private:
-	SOCKADDR mSockAddr;
-	shared_ptr<Listener> mListener;
+	SOCKADDR				mSockAddr;
+	shared_ptr<Listener>	mListener;
 
 public:
 	bool		Init();

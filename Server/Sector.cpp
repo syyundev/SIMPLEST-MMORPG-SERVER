@@ -1,10 +1,11 @@
 #include "pch.h"
 #include "Sector.h"
 
-#include "SessionManager.h"
+#include "ServerObject.h"
+#include "ServerObjectManager.h"
 
 Sector::Sector(const int indexX, const int indexY)
-	:mIndexX{indexX},mIndexY{indexY}
+	:mIndexX{indexX}, mIndexY{indexY}	
 {
 	static int id = 0;
 	mID = ++id;
@@ -12,28 +13,19 @@ Sector::Sector(const int indexX, const int indexY)
 
 void Sector::Add(const int id)
 {
-	mSecLock.lock();
-	if(mSessions.count(id) == 0)
-		mSessions.insert(id);
-	mSecLock.unlock();
+	lock_guard<mutex> lk{ m_mutex };
+	m_serverObjectsList.insert(id);
 }
 
 void Sector::Remove(const int id)
 {
-	mSecLock.lock();
-	if(mSessions.count(id) != 0)
-		mSessions.erase(id);
-	mSecLock.unlock();
+	lock_guard<mutex> lk{ m_mutex };
+	if(m_serverObjectsList.find(id) != m_serverObjectsList.end())
+		m_serverObjectsList.erase(id);
 }
 
-shared_ptr<Session> Sector::FindSession(const int id)
+unordered_set<int> Sector::GetObjList()	   noexcept
 {
-	mSecLock.lock();
-	if(mSessions.count(id)) {
-		shared_ptr<Session> session = MANAGER(SessionManager)->GetSession(id);
-		mSecLock.unlock();
-		return session;
-	}
-	mSecLock.unlock();
-	return nullptr;
+	lock_guard<mutex> lk{ m_mutex };
+	return m_serverObjectsList;
 }

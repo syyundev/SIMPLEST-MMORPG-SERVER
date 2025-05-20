@@ -10,6 +10,7 @@ friend class Singleton;
 
 #define MANAGER(name) (name::GetInstance())
 
+#define NOMINMAX
 #define ENABLE_VIEW_PROCESSING
 #define ENABLE_SPACE_DEVISION
 
@@ -130,11 +131,17 @@ using std::array;
 #include <concurrent_unordered_map.h>
 #include <concurrent_queue.h>
 #include <concurrent_unordered_set.h>
+#include <concurrent_priority_queue.h>
 #include <WS2tcpip.h>
 #include <MSWSock.h>
 
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
+
+struct PacketHeader {
+	unsigned char size;
+	char type;
+};
 
 #include "protocol.h"
 
@@ -285,3 +292,29 @@ public:
 };
 
 void print_error_message(int s_err);
+
+
+struct Pos {
+	short x, y;
+
+public:
+	explicit Pos(const short _x, const short _y) :x{ _x }, y{ _y } {}
+	auto operator<=> (const Pos&) const noexcept = default;  // <=> 연산자 추가
+};
+
+struct Stat {
+	int					hp;
+	int					maxHp;
+	int					exp;
+	int					level;
+};
+
+enum class MONSTER_TYPE : unsigned char {
+	DEFAULT,
+
+	END
+};
+
+#include "PacketFunc.h"
+#include "SendBuffer.h"
+#include <shared_mutex>

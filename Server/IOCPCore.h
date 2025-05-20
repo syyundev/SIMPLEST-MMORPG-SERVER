@@ -9,10 +9,10 @@ class IOCPCore : public Singleton<IOCPCore> {
 
 private:
 	HANDLE mIocpHandle;
-
+	
 public:
 	bool Init();
-	bool Process();
+	void Process();
 	void Destory();
 	bool Regist(const shared_ptr<IOCPRegistrable>& object);
 	bool Regist(const SOCKET socket);

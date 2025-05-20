@@ -33,6 +33,8 @@ enum class IO_CONTEXT_TYPE : unsigned char {
 	SEND,
 	CONNECT,
 	DISCONNECT,
+
+	EVENT,
 };
 
 class IOContext : public OVERLAPPED {
@@ -85,4 +87,14 @@ class DisconnectContext : public IOContext {
 public:
 	DisconnectContext()
 		:IOContext(IO_CONTEXT_TYPE::DISCONNECT) {}
+};
+
+class EventContext : public IOContext {
+public:
+	TASK_TYPE type;
+public:
+	EventContext()
+		:IOContext(IO_CONTEXT_TYPE::EVENT)
+	{
+	}
 };

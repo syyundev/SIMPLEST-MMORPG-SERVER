@@ -5,17 +5,17 @@ bool ThreadPool::Init() noexcept
 {
 	mMaxWorkerThreadCount = std::thread::hardware_concurrency();
 
-	m_stopAll.reset();
-
-	// For Main-Thread
-	InitTLS();
-
-	for(unsigned char i = 0; i < mMaxWorkerThreadCount; ++i)
-		m_threads.emplace_back([this]() { InitTLS();  Work(); DestroyTLS(); });
-
-#ifdef _DEBUG
-	printf_s(std::format("Thread Pool Init").c_str());
-#endif // _DEBUG
+//	m_stopAll.reset();
+//
+//	// For Main-Thread
+//	InitTLS();
+//
+//	for(unsigned char i = 0; i < mMaxWorkerThreadCount; ++i)
+//		m_threads.emplace_back([this]() { InitTLS();  Work(); DestroyTLS(); });
+//
+//#ifdef _DEBUG
+//	printf_s(std::format("Thread Pool Init").c_str());
+//#endif // _DEBUG
 
 	return true;
 }

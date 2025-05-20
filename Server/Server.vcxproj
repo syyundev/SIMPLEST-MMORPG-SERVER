@@ -152,12 +152,14 @@
     <ClCompile Include="IOCPCore.cpp" />
     <ClCompile Include="IOCPRegistrable.cpp" />
     <ClCompile Include="Listener.cpp" />
+    <ClCompile Include="Monster.cpp" />
+    <ClCompile Include="PacketFunc.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="RecvBuffer.cpp" />
     <ClCompile Include="Sector.cpp" />
     <ClCompile Include="SendBuffer.cpp" />
     <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="ServerObject.cpp" />
-    <ClCompile Include="Packet.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -168,6 +170,7 @@
     <ClCompile Include="ServerObjectManager.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="SessionManager.cpp" />
+    <ClCompile Include="TaskQueue.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -176,18 +179,21 @@
     <ClInclude Include="IOCPCore.h" />
     <ClInclude Include="IOCPRegistrable.h" />
     <ClInclude Include="Listener.h" />
+    <ClInclude Include="Monster.h" />
+    <ClInclude Include="PacketFunc.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="protocol.h" />
     <ClInclude Include="RecvBuffer.h" />
     <ClInclude Include="Sector.h" />
     <ClInclude Include="SendBuffer.h" />
     <ClInclude Include="ServerManager.h" />
     <ClInclude Include="ServerObject.h" />
-    <ClInclude Include="Packet.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ServerObjectManager.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Singleton.hpp" />
+    <ClInclude Include="TaskQueue.h" />
     <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

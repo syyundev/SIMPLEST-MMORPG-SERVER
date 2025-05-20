@@ -1,14 +1,16 @@
 constexpr int PORT_NUM = 4000;
 constexpr int BUF_SIZE = 200;
 constexpr int NAME_SIZE = 20;
-	
-constexpr int MAX_USER = 10000;
+constexpr int CHAT_SIZE = 100;
 
-constexpr int W_WIDTH = 400;
-constexpr int W_HEIGHT = 400;
+constexpr int MAX_USER = 10000;
+constexpr int MAX_NPC = 200000;
+
+constexpr int W_WIDTH = 2000;
+constexpr int W_HEIGHT = 2000;
 
 constexpr char MOVE_UP = 0;
-constexpr char MOVE_DOWN = 1;
+constexpr char MOVE_DOWN = 1;	
 constexpr char MOVE_LEFT = 2;
 constexpr char MOVE_RIGHT = 3;
 
@@ -16,11 +18,20 @@ constexpr char MOVE_RIGHT = 3;
 // Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
+constexpr char CS_CHAT = 2;
+constexpr char CS_ATTACK = 3;			// 4 방향 공격
+constexpr char CS_TELEPORT = 4;			// RANDOM한 위치로 Teleport, Stress Test할 때 Hot Spot현상을 피하기 위해 구현	
+constexpr char CS_LOGOUT = 5;			// 클라이언트에서 정상적으로 접속을 종료하는 패킷
+
 
 constexpr char SC_LOGIN_INFO = 2;
-constexpr char SC_ADD_PLAYER = 3;
-constexpr char SC_REMOVE_PLAYER = 4;
-constexpr char SC_MOVE_PLAYER = 5;
+constexpr char SC_ADD_OBJECT = 3;
+constexpr char SC_REMOVE_OBJECT = 4;
+constexpr char SC_MOVE_OBJECT = 5;
+constexpr char SC_CHAT = 6;
+constexpr char SC_LOGIN_OK = 7;
+constexpr char SC_LOGIN_FAIL = 8;
+constexpr char SC_STAT_CHANGE = 9;
 
 constexpr int VIEW_RANGE = 5; // TEST
 
@@ -38,33 +49,54 @@ struct CS_MOVE_PACKET {
 	unsigned	move_time;
 };
 
+
 struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
 	char	type;
-	short	id;
+	int		id;
+	int		hp;
+	int		max_hp;
+	int		exp;
+	int		level;
 	short	x, y;
 };
 
-struct SC_ADD_PLAYER_PACKET {
+struct SC_MOVE_OBJECT_PACKET {
 	unsigned char size;
 	char	type;
-	short	id;
-	short	x, y;
-	char	name[NAME_SIZE];
-};
-
-struct SC_REMOVE_PLAYER_PACKET {
-	unsigned char size;
-	char	type;
-	short	id;
-};
-
-struct SC_MOVE_PLAYER_PACKET {
-	unsigned char size;
-	char	type;
-	short	id;
+	int		id;
 	short	x, y;
 	unsigned int move_time;
 };
 
+struct SC_ADD_OBJECT_PACKET {
+	unsigned char size;
+	char	type;
+	int		id;
+	short	x, y;
+	char	name[NAME_SIZE];
+	unsigned char objType;
+};
+
+struct SC_REMOVE_OBJECT_PACKET {
+	unsigned char size;
+	char	type;
+	int id;
+	unsigned char objType;
+};
+
 #pragma pack (pop)
+
+enum class TASK_TYPE {
+	PLAYER_UPDATE,
+	MOVE,
+
+};
+
+enum class OBJECT_TYPE : unsigned char {
+	PLAYER,
+	MONSTER,
+	ITEM,
+
+	END
+};
