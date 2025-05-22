@@ -9,7 +9,7 @@
 #include "Session.h"
 
 Monster::Monster(const MONSTER_TYPE type)
-	:ServerObject(OBJECT_TYPE::MONSTER), m_monType(type), m_isActive(false)
+	:MovingObject(OBJECT_TYPE::MONSTER), m_monType(type), m_isActive(false)
 {
 	// 몬스터 아이디는 30000부터 시작
 	static int monsterID = 30000;
@@ -109,6 +109,10 @@ void Monster::Move()
 				sendPkt.x = GetPos().x;
 				sendPkt.y = GetPos().y;
 				sendPkt.objType = GetObjType();
+				sendPkt.hp = GetHP();
+				sendPkt.maxHP = GetMaxHP();
+				sendPkt.exp = GetExp();
+					sendPkt.level = GetLevel();
 				player->InsertViewList(GetID());
 				auto sendBuffer = make_shared<SendBuffer>();
 				sendBuffer->Append(sendPkt);

@@ -151,8 +151,10 @@
     <ClCompile Include="IOContext.cpp" />
     <ClCompile Include="IOCPCore.cpp" />
     <ClCompile Include="IOCPRegistrable.cpp" />
+    <ClCompile Include="Item.cpp" />
     <ClCompile Include="Listener.cpp" />
     <ClCompile Include="Monster.cpp" />
+    <ClCompile Include="MovingObject.cpp" />
     <ClCompile Include="PacketFunc.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="RecvBuffer.cpp" />
@@ -170,6 +172,7 @@
     <ClCompile Include="ServerObjectManager.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="SessionManager.cpp" />
+    <ClCompile Include="StaticObject.cpp" />
     <ClCompile Include="TaskQueue.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
@@ -178,8 +181,10 @@
     <ClInclude Include="IOContext.h" />
     <ClInclude Include="IOCPCore.h" />
     <ClInclude Include="IOCPRegistrable.h" />
+    <ClInclude Include="Item.h" />
     <ClInclude Include="Listener.h" />
     <ClInclude Include="Monster.h" />
+    <ClInclude Include="MovingObject.h" />
     <ClInclude Include="PacketFunc.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="protocol.h" />
@@ -193,6 +198,7 @@
     <ClInclude Include="Session.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Singleton.hpp" />
+    <ClInclude Include="StaticObject.h" />
     <ClInclude Include="TaskQueue.h" />
     <ClInclude Include="ThreadPool.h" />
   </ItemGroup>

@@ -4,7 +4,7 @@
 #include "TaskQueue.h"
 
 Player::Player()
-	:ServerObject(OBJECT_TYPE::PLAYER), m_attackPower{10}
+	:MovingObject(OBJECT_TYPE::PLAYER), m_attackPower{10}
 {
 	static atomic<int> playerID{1};
 	SetID(playerID);

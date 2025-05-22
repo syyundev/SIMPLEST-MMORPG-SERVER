@@ -41,10 +41,10 @@
       <Filter>02. Board\00. Sector</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
-      <Filter>02. ServerObjectManager\00. ServerObject\00. Player</Filter>
+      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject\00. Player</Filter>
     </ClCompile>
     <ClCompile Include="Monster.cpp">
-      <Filter>02. ServerObjectManager\00. ServerObject\01. Monster</Filter>
+      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject\01. Monster</Filter>
     </ClCompile>
     <ClCompile Include="PacketFunc.cpp">
       <Filter>96. PacketFuncs</Filter>
@@ -58,6 +58,15 @@
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerObjectManager.cpp">
       <Filter>02. ServerObjectManager</Filter>
+    </ClCompile>
+    <ClCompile Include="MovingObject.cpp">
+      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticObject.cpp">
+      <Filter>02. ServerObjectManager\00. ServerObject\00. StaticObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>02. ServerObjectManager\00. ServerObject\00. StaticObject\00. Item</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -104,10 +113,10 @@
       <Filter>02. Board\00. Sector</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
-      <Filter>02. ServerObjectManager\00. ServerObject\00. Player</Filter>
+      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject\00. Player</Filter>
     </ClInclude>
     <ClInclude Include="Monster.h">
-      <Filter>02. ServerObjectManager\00. ServerObject\01. Monster</Filter>
+      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject\01. Monster</Filter>
     </ClInclude>
     <ClInclude Include="PacketFunc.h">
       <Filter>96. PacketFuncs</Filter>
@@ -123,6 +132,15 @@
     </ClInclude>
     <ClInclude Include="ServerObjectManager.h">
       <Filter>02. ServerObjectManager</Filter>
+    </ClInclude>
+    <ClInclude Include="MovingObject.h">
+      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticObject.h">
+      <Filter>02. ServerObjectManager\00. ServerObject\00. StaticObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>02. ServerObjectManager\00. ServerObject\00. StaticObject\00. Item</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -165,12 +183,6 @@
     <Filter Include="02. ServerObjectManager\00. ServerObject">
       <UniqueIdentifier>{de86c58d-ef18-4020-ab0c-a5b42f750204}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. ServerObjectManager\00. ServerObject\00. Player">
-      <UniqueIdentifier>{23c023b2-34ce-47ec-9623-466107c9ca9a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. ServerObjectManager\00. ServerObject\01. Monster">
-      <UniqueIdentifier>{205af30f-b3d9-4b79-b4b9-edf8eee16249}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. ServerObjectManager\01. SessionManager">
       <UniqueIdentifier>{6c87b71b-e71f-4777-b5e4-436d853874fc}</UniqueIdentifier>
     </Filter>
@@ -185,6 +197,21 @@
     </Filter>
     <Filter Include="02. ServerObjectManager\03. IOCPRegistrable">
       <UniqueIdentifier>{09a7b9cd-1db4-4513-9260-f8cff4d3b1e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. ServerObjectManager\00. ServerObject\00. StaticObject">
+      <UniqueIdentifier>{fd7e03a7-2d39-4137-9e1e-fcde5ecc25f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. ServerObjectManager\00. ServerObject\01. MovingObject">
+      <UniqueIdentifier>{f815dfcd-2816-4f57-b062-3c0eddc499f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. ServerObjectManager\00. ServerObject\01. MovingObject\00. Player">
+      <UniqueIdentifier>{23c023b2-34ce-47ec-9623-466107c9ca9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. ServerObjectManager\00. ServerObject\01. MovingObject\01. Monster">
+      <UniqueIdentifier>{205af30f-b3d9-4b79-b4b9-edf8eee16249}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. ServerObjectManager\00. ServerObject\00. StaticObject\00. Item">
+      <UniqueIdentifier>{d07122d0-001f-4556-9614-fa139e56fd7f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

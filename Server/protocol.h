@@ -33,6 +33,8 @@ constexpr char SC_LOGIN_OK = 7;
 constexpr char SC_LOGIN_FAIL = 8;
 constexpr char SC_STAT_CHANGE = 9;
 
+constexpr char SC_OBJECT_STATE = 10;
+
 constexpr int VIEW_RANGE = 5; // TEST
 
 #pragma pack (push, 1)
@@ -42,18 +44,22 @@ struct CS_LOGIN_PACKET {
 	char	name[NAME_SIZE];
 };
 
+
 struct CS_MOVE_PACKET {
-	unsigned char size;
-	char	type;
-	char	direction;  // 0 : UP, 1 : DOWN, 2 : LEFT, 3 : RIGHT
-	unsigned	move_time;
+	unsigned char	size;
+	char			type;
+	char			direction;  // 0 : UP, 1 : DOWN, 2 : LEFT, 3 : RIGHT
+	unsigned		move_time;
 };
+
 
 struct CS_ATTACK_PACKET {
 	unsigned char size;
 	char	type;
 	int		id;
+	long long attack_time;
 };
+
 
 struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
@@ -67,6 +73,7 @@ struct SC_LOGIN_INFO_PACKET {
 	char	dir;
 };
 
+
 struct SC_MOVE_OBJECT_PACKET {
 	unsigned char size;
 	char	type;
@@ -76,6 +83,7 @@ struct SC_MOVE_OBJECT_PACKET {
 	char		dir;
 };
 
+
 struct SC_ADD_OBJECT_PACKET {
 	unsigned char	size;
 	char			type;
@@ -84,7 +92,14 @@ struct SC_ADD_OBJECT_PACKET {
 	char			name[NAME_SIZE];
 	unsigned char	objType;
 	char			dir;
+	// ITEM도 오브젝트 인데, 아래의 값이 필요할까? 그냥 쓸까? 
+	// -> 그냥 쓰자 
+	int				hp;
+	int				maxHP;
+	int				exp;
+	int				level;
 };
+
 
 struct SC_REMOVE_OBJECT_PACKET {
 	unsigned char	size;
@@ -93,6 +108,17 @@ struct SC_REMOVE_OBJECT_PACKET {
 	unsigned char	objType;
 };
 
+
+struct SC_OBJECT_STATE_PACKET {
+	unsigned char	size;
+	char			type;
+	int				id;
+	unsigned char	objType;
+	int				hp;
+	int				maxHP;
+	int				exp;
+	int				level;
+};
 #pragma pack (pop)
 
 enum class TASK_TYPE {
@@ -120,6 +146,13 @@ enum class MONSTER_TYPE : unsigned char {
 	DEFAULT,
 
 	END
+};
+
+enum class ITEM_TYPE : unsigned char {
+	POTION,
+	SWORD,
+	PISTOL,
+
 };
 
 enum class DIRECTION_TYPE : char {

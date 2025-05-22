@@ -17,10 +17,7 @@ bool ServerManager::Init()
 	MANAGER(SessionManager)->Init();
 	MANAGER(Board)->MakeSectors();
 
-	std::default_random_engine dre{  };
-	std::uniform_int_distribution<short> randomPos{ 0,W_WIDTH-1 };
-
-	for(int i = 0; i < 200'000; ++i) {
+	for(int i = 0; i < MAX_NPC; ++i) {
 		auto monster = make_shared<Monster>(MONSTER_TYPE::DEFAULT);
 		Pos pos{ randomPos(dre), randomPos(dre) };
 		monster->SetPos(pos);

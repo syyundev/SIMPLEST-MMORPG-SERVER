@@ -306,7 +306,8 @@ public:
 	}
 };
 
-
+extern std::default_random_engine dre;
+extern std::uniform_int_distribution<short> randomPos;
 #include "PacketFunc.h"
 #include "SendBuffer.h"
 #include <shared_mutex>

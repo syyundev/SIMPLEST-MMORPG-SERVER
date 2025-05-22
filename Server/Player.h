@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ServerObject.h"
+#include "MovingObject.h"
 
 class Session;
 
-class Player : public ServerObject {
+class Player : public MovingObject {
 private:
 	weak_ptr<Session>	m_ownerSession;
 	int					m_attackPower;

@@ -13,3 +13,5 @@ void print_error_message(int s_err)
 	LocalFree(lpMsgBuf);
 	// exit(-1);
 }
+std::default_random_engine dre{ std::random_device{}() };
+std::uniform_int_distribution<short> randomPos{ 0,W_WIDTH - 1 };

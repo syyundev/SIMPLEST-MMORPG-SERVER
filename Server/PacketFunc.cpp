@@ -13,7 +13,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 {
 	auto myPlayer = make_shared<Player>();
 	// const Pos myPos{ rand() % W_WIDTH, rand() % W_HEIGHT };
-	const Pos myPos{2, 2};
+	const Pos myPos{ randomPos(dre), randomPos(dre) };
 
 	myPlayer->SetOwnerSession(session);
 	session->SetPlayer(myPlayer);
@@ -86,6 +86,10 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
 						sendPkt.objType = myPlayer->GetObjType();
 						sendPkt.dir = myPlayer->GetDir();
+						sendPkt.hp = myPlayer->GetHP();
+						sendPkt.maxHP = myPlayer->GetMaxHP();
+						sendPkt.exp = myPlayer->GetExp();
+						sendPkt.level = myPlayer->GetLevel();
 						player->InsertViewList(myPlayer->GetID());
 
 						auto sendBuffer = make_shared<SendBuffer>();
@@ -97,6 +101,11 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 					{
 						auto monster = std::static_pointer_cast<Monster>(obj);
 						monster->WakeUp();   // 관찰자 추가
+						break;
+					}
+					case OBJECT_TYPE::ITEM:
+					{
+
 						break;
 					}
 					default:
@@ -113,7 +122,23 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 					sendPkt.y = obj->GetPos().y;
 					memcpy(sendPkt.name, obj->GetName().data(), obj->GetName().size());
 					sendPkt.objType = obj->GetObjType();
-					sendPkt.dir = obj->GetDir();
+					if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
+						auto p = std::static_pointer_cast<Player>(obj);
+						sendPkt.dir = p->GetDir();
+						sendPkt.hp = p->GetHP();
+						sendPkt.maxHP = p->GetMaxHP();
+						sendPkt.exp = p->GetExp();
+						sendPkt.level = p->GetLevel();
+					}
+					else if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
+						auto m = std::static_pointer_cast<Monster>(obj);
+						sendPkt.dir = std::static_pointer_cast<Monster>(obj)->GetDir();
+						sendPkt.hp = m->GetHP();
+						sendPkt.maxHP = m->GetMaxHP();
+						sendPkt.exp = m->GetExp();
+						sendPkt.level = m->GetLevel();
+					}
+					
 					myPlayer->InsertViewList(obj->GetID());
 
 					auto sendBuffer = make_shared<SendBuffer>();
@@ -130,6 +155,14 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MOVE_PACKET& recvPkt)
 {
 	auto myPlayer = session->GetPlayer();
+
+	long long prevTime = myPlayer->GetLastMoveTime();
+	long long current_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+	if(current_time - prevTime < 1000) {
+		cout << "아직 못움직여!\n";
+		return;
+	}
 
 	const Pos prevPos{ myPlayer->GetPos() };
 	Pos nextPos{ prevPos };
@@ -166,6 +199,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 		return;
 
 	if(MANAGER(Board)->CanGo(nextPos)) {
+		myPlayer->SetLastMoveTime(current_time);
 		myPlayer->SetPos(nextPos);
 		MANAGER(Board)->GetSector(nextPos)->Add(myPlayer->GetID());
 
@@ -251,6 +285,11 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
 						sendPkt.objType = myPlayer->GetObjType();
 						sendPkt.dir = myPlayer->GetDir();
+						sendPkt.hp = myPlayer->GetHP();
+						sendPkt.maxHP = myPlayer->GetMaxHP();
+						sendPkt.exp = myPlayer->GetExp();
+						sendPkt.level = myPlayer->GetLevel();
+
 						player->InsertViewList(myPlayer->GetID());
 
 						auto sendBuffer = make_shared<SendBuffer>();
@@ -278,7 +317,23 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 				sendPkt.y = obj->GetPos().y;
 				memcpy(sendPkt.name, obj->GetName().data(), obj->GetName().size());
 				sendPkt.objType = obj->GetObjType();
-				sendPkt.dir = obj->GetDir();
+				if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
+					auto p = std::static_pointer_cast<Player>(obj);
+					sendPkt.dir = p->GetDir();
+					sendPkt.dir = p->GetDir();
+					sendPkt.hp = p->GetHP();
+					sendPkt.maxHP = p->GetMaxHP();
+					sendPkt.exp = p->GetExp();
+					sendPkt.level = p->GetLevel();
+				}
+				else if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
+					auto m = std::static_pointer_cast<Monster>(obj);
+					sendPkt.dir = std::static_pointer_cast<Monster>(obj)->GetDir();
+					sendPkt.hp = m->GetHP();
+					sendPkt.maxHP = m->GetMaxHP();
+					sendPkt.exp = m->GetExp();
+					sendPkt.level = m->GetLevel();
+				}
 				myPlayer->InsertViewList(objID);
 
 				auto sendBuffer = make_shared<SendBuffer>();
@@ -327,6 +382,10 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 					{
 						break;
 					}
+					case OBJECT_TYPE::ITEM:
+					{
+						break;
+					}
 					default:
 						break;
 				}
@@ -338,6 +397,14 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_ATTACK_PACKET& recvPkt)
 {
 	auto myPlayer = session->GetPlayer();
+
+	long long prevAttackTime = myPlayer->GetLastAttackTime();
+	long long curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+	
+	if(curTime - prevAttackTime < 1000) {
+		cout << "아직 못 공격해!\n";
+		return;
+	}
 
 	const Pos playerPos = myPlayer->GetPos();
 
@@ -366,16 +433,52 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 
 				if(attackPos == monsterPos) {
 					const int attackDamage = myPlayer->GetAttackPower();
-					monster->SubExp(attackDamage);
+					monster->SubHP(attackDamage);
+
+					myPlayer->SetLastAttackTime(curTime);
+
+					SC_OBJECT_STATE_PACKET sendPkt;
+					sendPkt.size = sizeof(sendPkt);
+					sendPkt.type = SC_OBJECT_STATE;
+					sendPkt.id = monster->GetID();
+					sendPkt.objType = monster->GetObjType();
+					sendPkt.hp = monster->GetHP();
+					sendPkt.maxHP = monster->GetMaxHP();
+					sendPkt.level = monster->GetLevel();
+					sendPkt.exp = monster->GetExp();
+					auto sendBuffer = make_shared<SendBuffer>();
+					sendBuffer->Append(sendPkt);
+					session->RegistSend(std::move(sendBuffer));
+
+					{
+
+						auto sectorList = MANAGER(Board)->GetNeighborSectorList(monsterPos);
+						for(const int secID : sectorList) {
+							auto sector = MANAGER(Board)->GetSector(secID);
+
+							auto objList = sector->GetObjList();
+							for(const int objID : objList) {
+								auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+								if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+
+								if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
+								
+								if(obj->GetID() == myPlayer->GetID()) continue;
+								
+								if(MANAGER(Board)->CanSee(monster->GetPos(), obj->GetPos())) {
+									auto sendBuffer = make_shared<SendBuffer>();
+									sendBuffer->Append(sendPkt);
+									std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+								}
+							}
+						}
+
+					}
 
 					cout << std::format("{}번 플레이어가 {}번 몬스터에게 {}만큼 데미지를 가했습니다", myPlayer->GetID(), monster->GetID(),attackDamage).c_str() << endl;
 				}
 			}
 		}
 	}
-	
-
-
-
-
 }
