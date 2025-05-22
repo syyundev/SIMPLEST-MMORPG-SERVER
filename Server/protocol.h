@@ -49,6 +49,11 @@ struct CS_MOVE_PACKET {
 	unsigned	move_time;
 };
 
+struct CS_ATTACK_PACKET {
+	unsigned char size;
+	char	type;
+	int		id;
+};
 
 struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
@@ -59,6 +64,7 @@ struct SC_LOGIN_INFO_PACKET {
 	int		exp;
 	int		level;
 	short	x, y;
+	char	dir;
 };
 
 struct SC_MOVE_OBJECT_PACKET {
@@ -67,22 +73,24 @@ struct SC_MOVE_OBJECT_PACKET {
 	int		id;
 	short	x, y;
 	unsigned int move_time;
+	char		dir;
 };
 
 struct SC_ADD_OBJECT_PACKET {
-	unsigned char size;
-	char	type;
-	int		id;
-	short	x, y;
-	char	name[NAME_SIZE];
-	unsigned char objType;
+	unsigned char	size;
+	char			type;
+	int				id;
+	short			x, y;
+	char			name[NAME_SIZE];
+	unsigned char	objType;
+	char			dir;
 };
 
 struct SC_REMOVE_OBJECT_PACKET {
-	unsigned char size;
-	char	type;
-	int id;
-	unsigned char objType;
+	unsigned char	size;
+	char			type;
+	int				id;
+	unsigned char	objType;
 };
 
 #pragma pack (pop)
@@ -97,6 +105,28 @@ enum class OBJECT_TYPE : unsigned char {
 	PLAYER,
 	MONSTER,
 	ITEM,
+
+	END
+};
+
+struct Stat {
+	std::atomic_int		hp;
+	int					maxHp;
+	std::atomic_int		level;
+	std::atomic_int		exp;
+};
+
+enum class MONSTER_TYPE : unsigned char {
+	DEFAULT,
+
+	END
+};
+
+enum class DIRECTION_TYPE : char {
+	UP,
+	DOWN,
+	LEFT,
+	RIGHT,
 
 	END
 };

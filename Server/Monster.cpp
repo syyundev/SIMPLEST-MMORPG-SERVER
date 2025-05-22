@@ -9,7 +9,7 @@
 #include "Session.h"
 
 Monster::Monster(const MONSTER_TYPE type)
-	:ServerObject(OBJECT_TYPE::MONSTER), m_monType(type)
+	:ServerObject(OBJECT_TYPE::MONSTER), m_monType(type), m_isActive(false)
 {
 	// 몬스터 아이디는 30000부터 시작
 	static int monsterID = 30000;
@@ -23,6 +23,9 @@ Monster::~Monster()
 
 void Monster::Move()
 {
+	if(m_isActive == false)
+		return;
+
 	unordered_set<int> oldViewList;
 
 	auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
@@ -45,28 +48,30 @@ void Monster::Move()
 	}
 
 	Pos prevPos{ GetPos() };
+	Pos nextPos{ prevPos };
 
 	switch(rand() % 4) {
 		case MOVE_UP:
-			prevPos.y -= 1;
+			nextPos.y -= 1;
 			break;
 		case MOVE_DOWN:
-			prevPos.y += 1;
+			nextPos.y += 1;
 			break;
 		case MOVE_LEFT:
-			prevPos.x -= 1;
+			nextPos.x -= 1;
 			break;
 		case MOVE_RIGHT:
-			prevPos.x += 1;
+			nextPos.x += 1;
 			break;
 		default:
 			break;
 	}
 	
-	SetPos(prevPos);
+	if(MANAGER(Board)->CanGo(nextPos))
+		SetPos(nextPos);
 	
-	{
 		unordered_set<int> newViewList;
+	{
 
 		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
 
@@ -105,7 +110,6 @@ void Monster::Move()
 				sendPkt.y = GetPos().y;
 				sendPkt.objType = GetObjType();
 				player->InsertViewList(GetID());
-
 				auto sendBuffer = make_shared<SendBuffer>();
 				sendBuffer->Append(sendPkt);
 				player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
@@ -117,8 +121,7 @@ void Monster::Move()
 				sendPkt.id = GetID();
 				sendPkt.x = GetPos().x;
 				sendPkt.y = GetPos().y;
-				sendPkt.move_time = GetLastMoveTime();
-
+				sendPkt.move_time = static_cast<int>(GetLastMoveTime());
 				auto sendBuffer = make_shared<SendBuffer>();
 				sendBuffer->Append(sendPkt);
 				player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
@@ -132,7 +135,7 @@ void Monster::Move()
 				player->m_viewLock.lock();
 				if(player->m_viewList.find(GetID()) != player->m_viewList.end()) {
 					player->m_viewLock.unlock();
-
+					
 					player->DeleteViewList(objID);
 
 					SC_REMOVE_OBJECT_PACKET sendPkt;
@@ -153,19 +156,31 @@ void Monster::Move()
 	}
 
 
-	long long current_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	long long current_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 	if(30'000 == GetID()) {
 		std::cout << "MOVE: " << current_time -GetLastMoveTime() << "ms \n";
 	}
 	SetLastMoveTime(current_time);
 
+	//MANAGER(TaskQueue)->AddTask(Task{
+	//	GetID(),
+	//	std::chrono::high_resolution_clock::now() + 1s,
+	//	TASK_TYPE::MOVE,
+	//	0
+	//});
 }
 
 void Monster::WakeUp()
 {
+	if(m_isActive == true)
+		return;
+
 	bool expected{ false };
-	if(m_isActive.compare_exchange_strong(expected, true)) {
+
+	if(false == m_isActive.compare_exchange_strong(expected, true)) {
+		return;
+	}
+	else {
 		MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s , TASK_TYPE::MOVE, 0 });
 	}
 }
-

@@ -92,6 +92,7 @@ public:
 class EventContext : public IOContext {
 public:
 	TASK_TYPE type;
+
 public:
 	EventContext()
 		:IOContext(IO_CONTEXT_TYPE::EVENT)

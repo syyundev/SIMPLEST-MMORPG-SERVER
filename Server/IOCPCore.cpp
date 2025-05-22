@@ -7,6 +7,10 @@
 #include "TaskQueue.h"
 #include "ServerObject.h"
 #include "Monster.h"
+#include "Board.h"
+#include "Sector.h"
+#include "ServerObjectManager.h"
+
 bool IOCPCore::Init()
 {
 	mIocpHandle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
@@ -44,7 +48,7 @@ void IOCPCore::Process()
 						if(obj == nullptr) {
 							delete ioContext;
 							continue;
-						}
+						}	
 
 						if(obj->GetState() != S_STATE::ST_INGAME) {
 							delete ioContext;
@@ -53,9 +57,39 @@ void IOCPCore::Process()
 
 						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
 							auto monster = std::static_pointer_cast<Monster>(obj);
-							monster->Move();
-							monster->m_isActive = false;
-							MANAGER(TaskQueue)->AddTask(Task{ monster->GetID(), std::chrono::high_resolution_clock::now() + 1s, TASK_TYPE::MOVE, 0 });
+
+							const Pos pos = monster->GetPos();
+
+							bool keepAlive{ false };
+
+							auto sectorList = MANAGER(Board)->GetNeighborSectorList(pos);
+
+							for(const int secID : sectorList) {
+								auto sector = MANAGER(Board)->GetSector(secID);
+
+								auto objList = sector->GetObjList();
+
+								for(const int objID : objList) {
+									auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+									if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+
+									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
+
+									if(MANAGER(Board)->CanSee(monster->GetPos(), obj->GetPos())) {
+										keepAlive = true;
+										break;
+									}
+								}
+							}
+
+							if(keepAlive) {
+								monster->Move();
+								MANAGER(TaskQueue)->AddTask(Task{ monster->GetID(), std::chrono::high_resolution_clock::now() + 1s, TASK_TYPE::MOVE, -1 });
+							}
+							else {
+								monster->SetActive(false);
+							}
 						}
 						delete ioContext;
 					}

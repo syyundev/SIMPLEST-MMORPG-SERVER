@@ -202,6 +202,11 @@ void Session::ProcessPacket(const char* const buffer, const int packetSize)
 			Process_CS_MOVE_PACKET(std::static_pointer_cast<Session>(shared_from_this()), *(reinterpret_cast<const CS_MOVE_PACKET*>(buffer)));
 			break;
 		}
+		case CS_ATTACK:
+		{
+			Process_CS_ATTACK_PACKET(std::static_pointer_cast<Session>(shared_from_this()), *(reinterpret_cast<const CS_ATTACK_PACKET*>(buffer)));
+			break;
+		}
 		default:
 			break;
 	}
@@ -232,7 +237,7 @@ void Session::PostSend()
 	}
 
 	DWORD sizeSent{};
-	if(SOCKET_ERROR == WSASend(m_socket, wsaBufs.data(), wsaBufs.size(), &sizeSent, 0, &mSendContext, nullptr)) {
+	if(SOCKET_ERROR == WSASend(m_socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), &sizeSent, 0, &mSendContext, nullptr)) {
 		int errorCode = ::WSAGetLastError();
 		if(errorCode != WSA_IO_PENDING) {
 			print_error_message(errorCode);

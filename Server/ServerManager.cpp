@@ -16,12 +16,17 @@ bool ServerManager::Init()
 {
 	MANAGER(SessionManager)->Init();
 	MANAGER(Board)->MakeSectors();
-	// TODO: 阁胶磐 积己 -> ServerObject啊 包府
+
+	std::default_random_engine dre{  };
+	std::uniform_int_distribution<short> randomPos{ 0,W_WIDTH-1 };
+
 	for(int i = 0; i < 200'000; ++i) {
 		auto monster = make_shared<Monster>(MONSTER_TYPE::DEFAULT);
-		monster->SetPos(Pos{ rand() % W_WIDTH, rand() % W_HEIGHT });
-		MANAGER(Board)->GetSector(monster->GetPos())->Add(monster->GetID());
+		Pos pos{ randomPos(dre), randomPos(dre) };
+		monster->SetPos(pos);
 		monster->SetState(ST_INGAME);
+		auto sector = MANAGER(Board)->GetSector(monster->GetPos());
+		sector->Add(monster->GetID());
 		MANAGER(ServerObjectManager)->AddServerObject(std::move(monster));
 	}
 

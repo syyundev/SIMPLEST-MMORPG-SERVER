@@ -75,4 +75,6 @@ bool Board::CanSee(const Pos from, const Pos to)
 {
 	if(abs(from.x - to.x) > VIEW_RANGE) return false;
 	return abs(from.y - to.y) <= VIEW_RANGE;
+	//double dx = a.x - b.x, dy = a.y - b.y;
+	//return dx * dx + dy * dy <= VIEW_RANGE * VIEW_RANGE;
 }

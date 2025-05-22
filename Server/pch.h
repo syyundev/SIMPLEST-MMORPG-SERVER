@@ -299,21 +299,13 @@ struct Pos {
 
 public:
 	explicit Pos(const short _x, const short _y) :x{ _x }, y{ _y } {}
-	auto operator<=> (const Pos&) const noexcept = default;  // <=> 연산자 추가
+	auto operator<=> (const Pos&) const noexcept = default; 
+	Pos operator+(const Pos& other) const noexcept
+	{
+		return Pos{ static_cast<short>(x + other.x), static_cast<short>(y + other.y) };
+	}
 };
 
-struct Stat {
-	int					hp;
-	int					maxHp;
-	int					exp;
-	int					level;
-};
-
-enum class MONSTER_TYPE : unsigned char {
-	DEFAULT,
-
-	END
-};
 
 #include "PacketFunc.h"
 #include "SendBuffer.h"

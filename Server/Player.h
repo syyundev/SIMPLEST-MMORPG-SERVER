@@ -7,6 +7,7 @@ class Session;
 class Player : public ServerObject {
 private:
 	weak_ptr<Session>	m_ownerSession;
+	int					m_attackPower;
 
 public:
 	mutex				m_pLock;
@@ -20,6 +21,7 @@ public:
 	virtual ~Player();
 
 public:
+	int GetAttackPower() const noexcept { return m_attackPower; }
 	void InsertViewList(const int id);
 	void DeleteViewList(const int id);
 	void SetOwnerSession(const std::shared_ptr<Session> session) noexcept { m_ownerSession = session; }

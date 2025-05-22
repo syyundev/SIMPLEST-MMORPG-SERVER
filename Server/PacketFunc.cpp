@@ -4,7 +4,7 @@
 #include "Player.h"
 #include "Board.h"
 #include "ServerObjectManager.h"
-#include "Sector.h"
+#include "Sector.h"	
 #include "Session.h"
 #include "SessionManager.h"
 #include "Monster.h"
@@ -12,13 +12,15 @@
 void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_LOGIN_PACKET& recvPkt)
 {
 	auto myPlayer = make_shared<Player>();
-	const Pos myPos{ rand() % W_WIDTH, rand() % W_HEIGHT };
+	// const Pos myPos{ rand() % W_WIDTH, rand() % W_HEIGHT };
+	const Pos myPos{2, 2};
 
 	myPlayer->SetOwnerSession(session);
 	session->SetPlayer(myPlayer);
 	myPlayer->SetName(recvPkt.name);
 	myPlayer->SetPos(myPos);
 	myPlayer->SetState(S_STATE::ST_INGAME);
+	myPlayer->SetDir(DIRECTION_TYPE::LEFT);
 
 	MANAGER(Board)->GetSector(myPos)->Add(myPlayer->GetID());
 
@@ -30,12 +32,13 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 		sendPkt.id = myPlayer->GetID();
 		sendPkt.x = myPlayer->GetPos().x;
 		sendPkt.y = myPlayer->GetPos().y;
+		sendPkt.dir = myPlayer->GetDir();
+		
 
-		const Stat& stat = myPlayer->GetStat();
-		sendPkt.hp = stat.hp;
-		sendPkt.max_hp = stat.maxHp;
-		sendPkt.exp = stat.exp;
-		sendPkt.level = stat.level;
+		sendPkt.hp = myPlayer->GetHP();
+		sendPkt.max_hp = myPlayer->GetMaxHP();
+		sendPkt.exp = myPlayer->GetExp();
+		sendPkt.level = myPlayer->GetLevel();
 
 		auto sendBuffer = make_shared<SendBuffer>();
 		sendBuffer->Append(sendPkt);
@@ -82,6 +85,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 						sendPkt.y = myPos.y;
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
 						sendPkt.objType = myPlayer->GetObjType();
+						sendPkt.dir = myPlayer->GetDir();
 						player->InsertViewList(myPlayer->GetID());
 
 						auto sendBuffer = make_shared<SendBuffer>();
@@ -91,7 +95,8 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 					}
 					case OBJECT_TYPE::MONSTER:
 					{
-						std::static_pointer_cast<Monster>(obj)->WakeUp();
+						auto monster = std::static_pointer_cast<Monster>(obj);
+						monster->WakeUp();   // 관찰자 추가
 						break;
 					}
 					default:
@@ -108,6 +113,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 					sendPkt.y = obj->GetPos().y;
 					memcpy(sendPkt.name, obj->GetName().data(), obj->GetName().size());
 					sendPkt.objType = obj->GetObjType();
+					sendPkt.dir = obj->GetDir();
 					myPlayer->InsertViewList(obj->GetID());
 
 					auto sendBuffer = make_shared<SendBuffer>();
@@ -129,6 +135,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 	Pos nextPos{ prevPos };
 
 	myPlayer->SetLastMoveTime(recvPkt.move_time);
+	myPlayer->SetDir(static_cast<DIRECTION_TYPE>(recvPkt.direction));
 
 	switch(recvPkt.direction) {
 		case MOVE_UP:
@@ -194,7 +201,8 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 			sendPkt.id = myPlayer->GetID();
 			sendPkt.x = myPlayer->GetPos().x;
 			sendPkt.y = myPlayer->GetPos().y;
-			sendPkt.move_time = myPlayer->GetLastMoveTime();
+			sendPkt.move_time = static_cast<int>(myPlayer->GetLastMoveTime());
+			sendPkt.dir = myPlayer->GetDir();
 
 			auto sendBuffer = make_shared<SendBuffer>();
 			sendBuffer->Append(sendPkt);
@@ -217,13 +225,15 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 					if(player->m_viewList.end() != player->m_viewList.find(myPlayer->GetID())) {
 						player->m_viewLock.unlock();
 
+
 						SC_MOVE_OBJECT_PACKET sendPkt;
 						sendPkt.size = sizeof(sendPkt);
 						sendPkt.type = SC_MOVE_OBJECT;
 						sendPkt.id = myPlayer->GetID();
 						sendPkt.x = myPlayer->GetPos().x;
 						sendPkt.y = myPlayer->GetPos().y;
-						sendPkt.move_time = myPlayer->GetLastMoveTime();
+						sendPkt.move_time = static_cast<int>(myPlayer->GetLastMoveTime());
+						sendPkt.dir = myPlayer->GetDir();
 
 						auto sendBuffer = make_shared<SendBuffer>();
 						sendBuffer->Append(sendPkt);
@@ -231,7 +241,6 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 					}
 					else {
 						player->m_viewLock.unlock();
-
 
 						SC_ADD_OBJECT_PACKET sendPkt;
 						sendPkt.size = sizeof(sendPkt);
@@ -241,6 +250,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 						sendPkt.y = myPlayer->GetPos().y;
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
 						sendPkt.objType = myPlayer->GetObjType();
+						sendPkt.dir = myPlayer->GetDir();
 						player->InsertViewList(myPlayer->GetID());
 
 						auto sendBuffer = make_shared<SendBuffer>();
@@ -251,7 +261,8 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 				}
 				case OBJECT_TYPE::MONSTER:
 				{
-					std::static_pointer_cast<Monster>(obj)->WakeUp();
+					auto monster = std::static_pointer_cast<Monster>(obj);
+					monster->WakeUp();
 					break;
 				}
 				default:
@@ -267,6 +278,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 				sendPkt.y = obj->GetPos().y;
 				memcpy(sendPkt.name, obj->GetName().data(), obj->GetName().size());
 				sendPkt.objType = obj->GetObjType();
+				sendPkt.dir = obj->GetDir();
 				myPlayer->InsertViewList(objID);
 
 				auto sendBuffer = make_shared<SendBuffer>();
@@ -320,8 +332,50 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 				}
 			}
 		}
-
-
 	}
 }
 
+void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_ATTACK_PACKET& recvPkt)
+{
+	auto myPlayer = session->GetPlayer();
+
+	const Pos playerPos = myPlayer->GetPos();
+
+	auto sectorList = MANAGER(Board)->GetNeighborSectorList(playerPos);
+
+	for(const int secID : sectorList) {
+		auto sector = MANAGER(Board)->GetSector(secID);
+
+		auto objList = sector->GetObjList();
+
+		for(const int objID : objList) {
+			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+			if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+
+			if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::MONSTER) continue;
+
+			auto monster = std::static_pointer_cast<Monster>(obj);
+
+			static array<Pos, 4> attackDir{ Pos{-1,0}, Pos{1,0}, Pos{0,-1}, Pos{0,1} };
+
+			for(const Pos& dir : attackDir) {
+				Pos attackPos = playerPos + dir;
+
+				const Pos monsterPos = monster->GetPos();
+
+				if(attackPos == monsterPos) {
+					const int attackDamage = myPlayer->GetAttackPower();
+					monster->SubExp(attackDamage);
+
+					cout << std::format("{}번 플레이어가 {}번 몬스터에게 {}만큼 데미지를 가했습니다", myPlayer->GetID(), monster->GetID(),attackDamage).c_str() << endl;
+				}
+			}
+		}
+	}
+	
+
+
+
+
+}
