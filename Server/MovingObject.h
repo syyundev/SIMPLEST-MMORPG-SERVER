@@ -20,8 +20,10 @@ public:
 	void					SetDir(const DIRECTION_TYPE dir) { m_dir = dir; }
 	void					SetHP(const int hp);
 	void					SetMaxHP(const int maxHP) noexcept { m_stat.maxHp = maxHP; }
-	void					SetExp(const int exp) noexcept { m_stat.exp = exp; }
+	void					SetExp(const int exp) noexcept;
 	void					SetAlive(const bool alive)  noexcept { m_alive = alive; }
+	void					SetLevel(const int level) noexcept { m_stat.level = level; }
+	int						GainExp();
 
 	void					AddExp(const int amount) noexcept { m_stat.exp.fetch_add(amount); }
 	void					AddHP(const int amount) noexcept { m_stat.hp.fetch_add(amount); }
@@ -40,7 +42,7 @@ public:
 	long long		GetLastMoveTime() const noexcept { return m_lastMoveTime; }
 	long long		GetLastAttackTime() const noexcept { return m_lastAttackTime; }
 	char			GetDir() const noexcept { return static_cast<char>(m_dir); }
-
+	virtual void			Attack(const int targetID) {}
 public:
 	virtual void Revive() {};
 

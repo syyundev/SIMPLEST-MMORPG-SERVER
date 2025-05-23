@@ -193,6 +193,11 @@ void Monster::WakeUp()
 	}
 }
 
+void Monster::Attack(const int targetID)
+{
+
+}
+
 void Monster::Revive()
 {
 	bool expected{ false };

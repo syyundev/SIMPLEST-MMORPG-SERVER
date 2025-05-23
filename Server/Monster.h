@@ -20,8 +20,8 @@ public:
 	void			WakeUp();
 
 public:
-	unsigned char	GetMonType() const noexcept { return static_cast<unsigned char>(m_monType); }
-
+	unsigned char			GetMonType() const noexcept { return static_cast<unsigned char>(m_monType); }
+	virtual void			Attack(const int targetID) override;
 public:
 	virtual void Revive() override;
 };

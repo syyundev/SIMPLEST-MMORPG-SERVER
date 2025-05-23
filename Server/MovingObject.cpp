@@ -14,7 +14,7 @@ MovingObject::MovingObject(const OBJECT_TYPE type)
 	m_stat.hp = 100;
 	m_stat.maxHp = 100;
 	m_stat.exp = 0;
-	m_stat.level = 0;
+	m_stat.level = 1;
 }
 
 MovingObject::~MovingObject()
@@ -26,6 +26,23 @@ void MovingObject::SetHP(const int hp)
 	m_stat.hp = hp;
 }
 
+void MovingObject::SetExp(const int exp) noexcept
+{
+}
+
+int MovingObject::GainExp()
+{
+	const int gainedXP = m_stat.level * m_stat.level* 2;
+	m_stat.exp += gainedXP;
+
+	while(m_stat.exp >= m_stat.level * 100) {
+		m_stat.exp -= m_stat.level * 100;  
+		m_stat.level++;  
+	}
+
+	return gainedXP;
+}
+
 void MovingObject::SubHP(const int amount) noexcept
 {
 	if(m_alive == false)
@@ -33,8 +50,9 @@ void MovingObject::SubHP(const int amount) noexcept
 
 	m_stat.hp.fetch_sub(amount);
 
-	if(m_stat.hp > 0)
+	if(m_stat.hp > 0) {
 		return;
+	}
 
 	SetState(MOVING_OBJECT_STATE::DEAD);
 
@@ -43,10 +61,46 @@ void MovingObject::SubHP(const int amount) noexcept
 		{
 			// TODO: Player 부활
 			auto player = std::static_pointer_cast<Player>(shared_from_this());
-			player->SetPos(player->GetStartPos());
-			m_stat.hp = m_stat.maxHp;
-			m_stat.exp.store(m_stat.exp / 2);
+			
+			SC_OBJECT_STATE_PACKET sendPkt;
+			sendPkt.size = sizeof(sendPkt);
+			sendPkt.type = SC_OBJECT_STATE;
+			sendPkt.id = GetID();
+			sendPkt.hp = GetHP();
+			sendPkt.maxHP = GetMaxHP();
+			sendPkt.exp = GetExp();
+			sendPkt.level = GetLevel();
+			
+			auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
+
+			for(const int secID : neighborSecList) {
+				auto sector = MANAGER(Board)->GetSector(secID);
+
+				auto objList = sector->GetObjList();
+
+				for(const int objID : objList) {
+					auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+					if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+
+					if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+
+					if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
+						auto player = std::static_pointer_cast<Player>(obj);
+
+						auto sendBuffer = make_shared<SendBuffer>();
+						sendBuffer->Append(sendPkt);
+						player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+					}
+				}
+			}
+
 			cout << std::format("{}번 플레이어 사망!\n", GetID());
+			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, TASK_TYPE::MONSTER_REVIVE, 0 });
+
+			//player->SetPos(player->GetStartPos());
+			//m_stat.hp = m_stat.maxHp;
+			//m_stat.exp.store(m_stat.exp / 2);
 			break;
 		}
 		case OBJECT_TYPE::MONSTER:

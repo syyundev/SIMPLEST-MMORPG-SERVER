@@ -15,7 +15,7 @@
 bool ServerManager::Init()
 {
 	MANAGER(SessionManager)->Init();
-	MANAGER(Board)->MakeSectors();
+	MANAGER(Board)->Make();
 
 	for(int i = 0; i < MAX_NPC; ++i) {
 		auto monster = make_shared<Monster>(MONSTER_TYPE::DEFAULT);

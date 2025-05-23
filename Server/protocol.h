@@ -65,6 +65,7 @@ struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
 	char	type;
 	int		id;
+	char	name[NAME_SIZE];
 	int		hp;
 	int		max_hp;
 	int		exp;
@@ -98,6 +99,8 @@ struct SC_ADD_OBJECT_PACKET {
 	int				maxHP;
 	int				exp;
 	int				level;
+
+	unsigned char	detail;
 };
 
 
@@ -127,6 +130,7 @@ enum class TASK_TYPE {
 
 	PLAYER_HEAL,
 	MONSTER_REVIVE,
+	PLAYER_REVIVE,
 };
 
 enum class OBJECT_TYPE : unsigned char {
@@ -170,6 +174,13 @@ enum class MOVING_OBJECT_STATE : unsigned char {
 	IDLE,
 	MOVE,
 	DEAD,
+
+	END
+};
+
+enum class TILE_TYPE : unsigned char {
+	ROAD,
+	OBSTACLE,
 
 	END
 };

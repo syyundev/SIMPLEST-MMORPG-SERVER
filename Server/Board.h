@@ -17,12 +17,13 @@ public:
 	static constexpr short			SECTOR_Y_COUNT = (BOARD_HEIGHT + SECTOR_SIZE -1) / SECTOR_SIZE;
 	
 public:
+	std::array<array<TILE_TYPE, BOARD_WIDTH>, BOARD_HEIGHT> m_boards;
 	std::array<std::array<shared_ptr<Sector>, SECTOR_X_COUNT>, SECTOR_Y_COUNT> mSectors;
 	unordered_map<int, shared_ptr<Sector>> m_hash;
 
 public:
 	bool CanGo(const Pos pos);
-	void MakeSectors();
+	void Make();
 	shared_ptr<Sector> GetSector(const Pos pos);
 	shared_ptr<Sector> GetSector(const int sectorID);
 	Pos GetSectorPos(const Pos pos) { return Pos{ static_cast<short>(pos.x / SECTOR_SIZE), static_cast<short>(pos.y / SECTOR_SIZE )}; }

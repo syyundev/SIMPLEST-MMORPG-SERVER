@@ -12,13 +12,13 @@
 void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_LOGIN_PACKET& recvPkt)
 {
 	auto myPlayer = make_shared<Player>();
-	// const Pos myPos{ rand() % W_WIDTH, rand() % W_HEIGHT };
 	const Pos myPos{ randomPos(dre), randomPos(dre) };
 
 	myPlayer->SetOwnerSession(session);
 	session->SetPlayer(myPlayer);
 	myPlayer->SetName(recvPkt.name);
 	myPlayer->SetPos(myPos);
+	myPlayer->SetStartPos(myPos);
 	myPlayer->SetServerState(S_STATE::ST_INGAME);
 	myPlayer->SetDir(DIRECTION_TYPE::LEFT);
 
@@ -33,8 +33,9 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 		sendPkt.x = myPlayer->GetPos().x;
 		sendPkt.y = myPlayer->GetPos().y;
 		sendPkt.dir = myPlayer->GetDir();
+		memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
+		sendPkt.name[myPlayer->GetName().size()] = 0;
 		
-
 		sendPkt.hp = myPlayer->GetHP();
 		sendPkt.max_hp = myPlayer->GetMaxHP();
 		sendPkt.exp = myPlayer->GetExp();
@@ -436,51 +437,8 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 				const Pos monsterPos = monster->GetPos();
 
 				if(attackPos == monsterPos) {
-					const int attackDamage = myPlayer->GetAttackPower();
-					monster->SubHP(attackDamage);
-
+					myPlayer->Attack(objID);
 					myPlayer->SetLastAttackTime(curTime);
-
-					SC_OBJECT_STATE_PACKET sendPkt;
-					sendPkt.size = sizeof(sendPkt);
-					sendPkt.type = SC_OBJECT_STATE;
-					sendPkt.id = monster->GetID();
-					sendPkt.objType = monster->GetObjType();
-					sendPkt.hp = monster->GetHP();
-					sendPkt.maxHP = monster->GetMaxHP();
-					sendPkt.level = monster->GetLevel();
-					sendPkt.exp = monster->GetExp();
-					auto sendBuffer = make_shared<SendBuffer>();
-					sendBuffer->Append(sendPkt);
-					session->RegistSend(std::move(sendBuffer));
-
-					{
-
-						auto sectorList = MANAGER(Board)->GetNeighborSectorList(monsterPos);
-						for(const int secID : sectorList) {
-							auto sector = MANAGER(Board)->GetSector(secID);
-
-							auto objList = sector->GetObjList();
-							for(const int objID : objList) {
-								auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
-
-								if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
-
-								if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
-								
-								if(obj->GetID() == myPlayer->GetID()) continue;
-								
-								if(MANAGER(Board)->CanSee(monster->GetPos(), obj->GetPos())) {
-									auto sendBuffer = make_shared<SendBuffer>();
-									sendBuffer->Append(sendPkt);
-									std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
-								}
-							}
-						}
-
-					}
-
-					cout << std::format("{}번 플레이어가 {}번 몬스터에게 {}만큼 데미지를 가했습니다", myPlayer->GetID(), monster->GetID(),attackDamage).c_str() << endl;
 				}
 			}
 		}

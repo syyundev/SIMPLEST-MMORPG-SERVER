@@ -20,7 +20,7 @@ public:
 	std::atomic_bool			m_flag;
 
 public:
-	void Init(HANDLE iocpHandle) noexcept { m_iocpHandle = iocpHandle; m_flag = true; }
+	void Init(HANDLE iocpHandle) noexcept;
 	void AddTask(const Task& task)noexcept;
 	void SetFlag(bool flag) { m_flag = flag; }
 

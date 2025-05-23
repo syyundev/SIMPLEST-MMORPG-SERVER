@@ -10,6 +10,7 @@
 #include "Board.h"
 #include "Sector.h"
 #include "ServerObjectManager.h"
+#include "Player.h"
 
 bool IOCPCore::Init()
 {
@@ -107,6 +108,20 @@ void IOCPCore::Process()
 						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
 							auto monster = std::static_pointer_cast<Monster>(obj);
 							monster->Revive();
+						}
+						break;
+					}
+					case TASK_TYPE::PLAYER_REVIVE:
+					{
+						const int id = static_cast<int>(key);
+						auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
+
+						if(obj == nullptr)
+							return;
+
+						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
+							auto player = std::static_pointer_cast<Player>(obj);
+							player->Revive();
 						}
 						break;
 					}

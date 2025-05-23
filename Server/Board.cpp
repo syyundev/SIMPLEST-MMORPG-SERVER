@@ -5,14 +5,32 @@
 
 bool Board::CanGo(const Pos pos)
 {
+	if(m_boards[pos.y][pos.x] == TILE_TYPE::OBSTACLE)
+		return false;
+
 	if(pos.x < 0 || pos.x >= BOARD_WIDTH || pos.y < 0 || pos.y >= Board::BOARD_HEIGHT)
 		return false;
 
 	return true;
 }
 
-void Board::MakeSectors()
+void Board::Make()
 {
+	std::ifstream ifs{ "tile_map_20x20.txt" };
+
+	//if(!ifs) {
+	//	cout << "Board Make Fail!";
+	//}
+
+	//int pos;
+	//while(ifs >> pos) {
+	//	for(int y = 0; y < 20; ++y) {
+	//		for(int x = 0; x < 20; ++x) {
+	//			m_boards[y][x] = static_cast<TILE_TYPE>(pos);
+	//		}
+	//	}
+	//}
+
 	for(int y = 0; y < SECTOR_Y_COUNT; ++y) {
 		for(int x = 0; x < SECTOR_X_COUNT; ++x) {
 			auto sector = make_shared<Sector>(x, y);

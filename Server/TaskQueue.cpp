@@ -5,6 +5,13 @@
 #include "Monster.h"	
 #include "IOContext.h"
 
+void TaskQueue::Init(HANDLE iocpHandle) noexcept
+{
+	m_iocpHandle = iocpHandle;
+	m_flag = true;
+
+}
+
 void TaskQueue::AddTask(const Task& task)noexcept
 {
 	lock_guard<mutex> lk{ m_mutex };
@@ -42,8 +49,15 @@ void TaskQueue::DoTask()
 					EventContext* context = new EventContext;
 					context->type = task.taskType;
 					PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
-				}
 					break;
+				}
+				case TASK_TYPE::PLAYER_REVIVE:
+				{
+					EventContext* context = new EventContext;
+					context->type = task.taskType;
+					PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
+					break;
+				}
 				default:
 					break;
 			}
