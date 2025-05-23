@@ -23,7 +23,7 @@ Monster::~Monster()
 
 void Monster::Move()
 {
-	if(m_isActive == false)
+	if(m_isActive == false || IsAlive() == false)
 		return;
 
 	unordered_set<int> oldViewList;
@@ -38,7 +38,7 @@ void Monster::Move()
 		for(const int objID : objList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 			if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
 
@@ -69,7 +69,8 @@ void Monster::Move()
 	
 	if(MANAGER(Board)->CanGo(nextPos))
 		SetPos(nextPos);
-	
+		SetState(MOVING_OBJECT_STATE::MOVE);
+
 		unordered_set<int> newViewList;
 	{
 
@@ -83,7 +84,7 @@ void Monster::Move()
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 				if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
 
@@ -95,7 +96,7 @@ void Monster::Move()
 		for(const int objID : newViewList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 			auto player = std::static_pointer_cast<Player>(obj);
 			
@@ -176,6 +177,9 @@ void Monster::Move()
 
 void Monster::WakeUp()
 {
+	if(IsAlive() == false)
+		return;
+
 	if(m_isActive == true)
 		return;
 
@@ -185,6 +189,50 @@ void Monster::WakeUp()
 		return;
 	}
 	else {
-		MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s , TASK_TYPE::MOVE, 0 });
+		MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s , TASK_TYPE::MONSTER_MOVE, 0 });
+	}
+}
+
+void Monster::Revive()
+{
+	bool expected{ false };
+
+	if(m_alive.compare_exchange_strong(expected, true)) {
+			SetHP(GetMaxHP());
+			SetAlive(true);
+			SetState(MOVING_OBJECT_STATE::IDLE);
+
+			SC_OBJECT_STATE_PACKET sendPkt;
+			sendPkt.size = sizeof(sendPkt);
+			sendPkt.type = SC_OBJECT_STATE;
+			sendPkt.id = GetID();
+			sendPkt.hp = GetHP();
+			sendPkt.maxHP = GetMaxHP();
+			sendPkt.exp = GetExp();
+			sendPkt.level = GetLevel();
+
+			auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
+
+			for(const int secID : neighborSecList) {
+				auto sector = MANAGER(Board)->GetSector(secID);
+
+				auto objList = sector->GetObjList();
+
+				for(const int objID : objList) {
+					auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+					if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+
+					if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+
+					if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
+						auto player = std::static_pointer_cast<Player>(obj);
+						
+						auto sendBuffer = make_shared<SendBuffer>();
+						sendBuffer->Append(sendPkt);
+						player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+					}
+				}
+			}
 	}
 }

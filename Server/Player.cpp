@@ -27,3 +27,7 @@ void Player::DeleteViewList(const int id)
 	if(m_viewList.find(id) != m_viewList.end())
 		m_viewList.erase(id);
 }
+
+void Player::Revive()
+{
+}

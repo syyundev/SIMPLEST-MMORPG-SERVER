@@ -19,7 +19,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 	session->SetPlayer(myPlayer);
 	myPlayer->SetName(recvPkt.name);
 	myPlayer->SetPos(myPos);
-	myPlayer->SetState(S_STATE::ST_INGAME);
+	myPlayer->SetServerState(S_STATE::ST_INGAME);
 	myPlayer->SetDir(DIRECTION_TYPE::LEFT);
 
 	MANAGER(Board)->GetSector(myPos)->Add(myPlayer->GetID());
@@ -66,7 +66,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 				if(obj->GetID() == myPlayer->GetID()) continue;
 
@@ -155,14 +155,16 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MOVE_PACKET& recvPkt)
 {
 	auto myPlayer = session->GetPlayer();
-
-	long long prevTime = myPlayer->GetLastMoveTime();
 	long long current_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+#ifdef MOVE_INTERVAL_1S
+	long long prevTime = myPlayer->GetLastMoveTime();
 
 	if(current_time - prevTime < 1000) {
 		cout << "아직 못움직여!\n";
 		return;
 	}
+#endif
 
 	const Pos prevPos{ myPlayer->GetPos() };
 	Pos nextPos{ prevPos };
@@ -218,7 +220,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 				if(obj->GetID() == myPlayer->GetID()) continue;
 
@@ -246,7 +248,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 		for(const int objID : nearList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 			if(obj->GetID() == myPlayer->GetID()) continue;
 
@@ -346,7 +348,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 			if(nearList.find(objID) == nearList.end()) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 				myPlayer->DeleteViewList(objID);
 
@@ -398,13 +400,15 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 {
 	auto myPlayer = session->GetPlayer();
 
-	long long prevAttackTime = myPlayer->GetLastAttackTime();
 	long long curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+#ifdef ATTACK_INTERVAL_1S
+	long long prevAttackTime = myPlayer->GetLastAttackTime();
 	
 	if(curTime - prevAttackTime < 1000) {
 		cout << "아직 못 공격해!\n";
 		return;
 	}
+#endif
 
 	const Pos playerPos = myPlayer->GetPos();
 
@@ -418,7 +422,7 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 		for(const int objID : objList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 			if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::MONSTER) continue;
 
@@ -460,7 +464,7 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 							for(const int objID : objList) {
 								auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-								if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+								if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 								if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
 								

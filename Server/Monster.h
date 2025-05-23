@@ -21,5 +21,7 @@ public:
 
 public:
 	unsigned char	GetMonType() const noexcept { return static_cast<unsigned char>(m_monType); }
-};
 
+public:
+	virtual void Revive() override;
+};

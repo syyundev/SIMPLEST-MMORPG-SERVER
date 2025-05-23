@@ -16,7 +16,6 @@ void TaskQueue::DoTask()
 	using namespace chrono;
 	do {
 		do {
-
 			m_mutex.lock();
 			if(m_taskQueue.empty()) {
 				m_mutex.unlock();
@@ -31,13 +30,20 @@ void TaskQueue::DoTask()
 			m_mutex.unlock();
 
 			switch(task.taskType) {
-				case TASK_TYPE::MOVE:
+				case TASK_TYPE::MONSTER_MOVE:
 				{
 					EventContext* context = new EventContext;
 					context->type = task.taskType;
 					PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
 					break;
 				}
+				case TASK_TYPE::MONSTER_REVIVE:
+				{
+					EventContext* context = new EventContext;
+					context->type = task.taskType;
+					PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
+				}
+					break;
 				default:
 					break;
 			}

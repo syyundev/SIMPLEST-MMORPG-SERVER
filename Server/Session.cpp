@@ -138,7 +138,7 @@ void Session::PostDisconnect()
 		if(serverObject == nullptr)
 			continue;
 
-		if(serverObject->GetState() != ST_INGAME)
+		if(serverObject->GetSeverState() != ST_INGAME)
 			continue;
 
 		if(id == m_id)

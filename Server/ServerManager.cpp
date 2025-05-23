@@ -21,7 +21,7 @@ bool ServerManager::Init()
 		auto monster = make_shared<Monster>(MONSTER_TYPE::DEFAULT);
 		Pos pos{ randomPos(dre), randomPos(dre) };
 		monster->SetPos(pos);
-		monster->SetState(ST_INGAME);
+		monster->SetServerState(ST_INGAME);
 		auto sector = MANAGER(Board)->GetSector(monster->GetPos());
 		sector->Add(monster->GetID());
 		MANAGER(ServerObjectManager)->AddServerObject(std::move(monster));

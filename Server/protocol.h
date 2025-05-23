@@ -123,8 +123,10 @@ struct SC_OBJECT_STATE_PACKET {
 
 enum class TASK_TYPE {
 	PLAYER_UPDATE,
-	MOVE,
+	MONSTER_MOVE,
 
+	PLAYER_HEAL,
+	MONSTER_REVIVE,
 };
 
 enum class OBJECT_TYPE : unsigned char {
@@ -160,6 +162,14 @@ enum class DIRECTION_TYPE : char {
 	DOWN,
 	LEFT,
 	RIGHT,
+
+	END
+};
+
+enum class MOVING_OBJECT_STATE : unsigned char {
+	IDLE,
+	MOVE,
+	DEAD,
 
 	END
 };

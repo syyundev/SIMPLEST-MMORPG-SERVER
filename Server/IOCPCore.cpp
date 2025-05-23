@@ -40,8 +40,10 @@ void IOCPCore::Process()
 
 				switch(auto type = eventContext->type) {
 					case TASK_TYPE::PLAYER_UPDATE:
+					{
 						break;
-					case TASK_TYPE::MOVE:
+					}
+					case TASK_TYPE::MONSTER_MOVE:
 					{
 						const int id = static_cast<int>(key);
 						auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
@@ -50,7 +52,7 @@ void IOCPCore::Process()
 							continue;
 						}	
 
-						if(obj->GetState() != S_STATE::ST_INGAME) {
+						if(obj->GetSeverState() != S_STATE::ST_INGAME) {
 							delete ioContext;
 							continue;
 						}
@@ -72,7 +74,7 @@ void IOCPCore::Process()
 								for(const int objID : objList) {
 									auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-									if(obj == nullptr || obj->GetState() != ST_INGAME) continue;
+									if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
 
 									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
 
@@ -85,13 +87,28 @@ void IOCPCore::Process()
 
 							if(keepAlive) {
 								monster->Move();
-								MANAGER(TaskQueue)->AddTask(Task{ monster->GetID(), std::chrono::high_resolution_clock::now() + 1s, TASK_TYPE::MOVE, -1 });
+								MANAGER(TaskQueue)->AddTask(Task{ monster->GetID(), std::chrono::high_resolution_clock::now() + 1s, TASK_TYPE::MONSTER_MOVE, -1 });
 							}
 							else {
 								monster->SetActive(false);
 							}
 						}
 						delete ioContext;
+						break;
+					}
+					case TASK_TYPE::MONSTER_REVIVE:
+					{
+						const int id = static_cast<int>(key);
+						auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
+
+						if(obj == nullptr)
+							return;
+
+						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
+							auto monster = std::static_pointer_cast<Monster>(obj);
+							monster->Revive();
+						}
+						break;
 					}
 					break;
 					default:
@@ -125,7 +142,7 @@ void IOCPCore::Process()
 						if(obj == nullptr)
 							continue;
 
-						if(obj->GetState() != S_STATE::ST_INGAME)
+						if(obj->GetSeverState() != S_STATE::ST_INGAME)
 							continue;
 
 						/*if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {

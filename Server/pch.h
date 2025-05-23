@@ -14,6 +14,9 @@ friend class Singleton;
 #define ENABLE_VIEW_PROCESSING
 #define ENABLE_SPACE_DEVISION
 
+// #define MOVE_INTERVAL_1S
+// #define ATTACK_INTERVAL_1S
+
 #include <iostream>
 // STL
 #include <memory>
@@ -298,6 +301,7 @@ struct Pos {
 	short x, y;
 
 public:
+	Pos() :x{ 0 }, y{ 0 } {}
 	explicit Pos(const short _x, const short _y) :x{ _x }, y{ _y } {}
 	auto operator<=> (const Pos&) const noexcept = default; 
 	Pos operator+(const Pos& other) const noexcept
