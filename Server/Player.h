@@ -29,7 +29,6 @@ public:
 	void	DeleteViewList(const int id);
 	void	SetOwnerSession(const std::shared_ptr<Session> session) noexcept { m_ownerSession = session; }
 	shared_ptr<Session> GetOwnerSession() const noexcept { return m_ownerSession.lock(); }
-	void	Test();
 	
 public:
 	virtual void Attack(const int targetID) override;

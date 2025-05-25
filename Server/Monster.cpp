@@ -15,25 +15,25 @@ Monster::Monster()
 	static int monsterID = 30000;
 	SetID(monsterID);
 
-	if(monsterID < 80'000) {
-		m_monType = MONSTER_TYPE::PEACE_FIX;
-		SetName("M_PF_" + to_string(monsterID));
-	}
-	else if(monsterID < 130'000) {
-		m_monType = MONSTER_TYPE::PEACE_ROAMING;
-		SetName("M_PR_" + to_string(monsterID));
-	}
-	else if(monsterID < 180'000) {
-		m_monType = MONSTER_TYPE::AGRO_FIX;
-		SetName("M_AF_" + to_string(monsterID));
-	}
-	else {
-		m_monType = MONSTER_TYPE::AGRO_ROAMING;
-		SetName("M_AR_" + to_string(monsterID));
-	}
+	//if(monsterID < 80'000) {
+	//	m_monType = MONSTER_TYPE::PEACE_FIX;
+	//	SetName("M_PF_" + to_string(monsterID));
+	//}
+	//else if(monsterID < 130'000) {
+	//	m_monType = MONSTER_TYPE::PEACE_ROAMING;
+	//	SetName("M_PR_" + to_string(monsterID));
+	//}
+	//else if(monsterID < 180'000) {
+	//	m_monType = MONSTER_TYPE::AGRO_FIX;
+	//	SetName("M_AF_" + to_string(monsterID));
+	//}
+	//else {
+	//	m_monType = MONSTER_TYPE::AGRO_ROAMING;
+	//	SetName("M_AR_" + to_string(monsterID));
+	//}
 
-	//m_monType = MONSTER_TYPE::AGRO_ROAMING;
-	//SetName("M_AR_" + to_string(monsterID));
+	m_monType = MONSTER_TYPE::AGRO_ROAMING;
+	SetName("M_AR_" + to_string(monsterID));
 
 	monsterID++;
 }
@@ -361,7 +361,7 @@ void Monster::Trace()
 	}
 	else {
 		auto target = m_target.lock();
-		if(target != nullptr) {
+		if(target != nullptr && target->IsAlive()) {
 			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s, EVENT_TYPE::ATTACK, target->GetID() });
 		}
 	}

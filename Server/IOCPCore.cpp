@@ -72,7 +72,7 @@ void IOCPCore::ProcessIO()
 							for(const int secID : sectorList) {
 								auto sector = MANAGER(Board)->GetSector(secID);
 
-								auto objList = sector->GetObjList();
+								const auto objList = sector->GetObjList();
 
 								for(const int objID : objList) {
 									auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
@@ -114,14 +114,16 @@ void IOCPCore::ProcessIO()
 						}
 
 						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
-
+							// TOOD: Monster Attacked
 						}
 						else if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
 							auto player = std::static_pointer_cast<Player>(obj);
-
-							int hp = player->GetHP();
-							hp -= 10;
-							player->SetHP(hp);
+							if(player->IsAlive() == false) {
+								delete ioContext;
+								continue;
+							}
+							
+							player->SubHP(10);
 
 							SC_OBJECT_STATE_PACKET sendPkt;
 							sendPkt.size = sizeof(sendPkt);
@@ -240,6 +242,10 @@ void IOCPCore::ProcessIO()
 							auto monster = std::static_pointer_cast<Monster>(obj);
 							monster->Revive();
 						}
+						else if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
+							auto player = std::static_pointer_cast<Player>(obj);
+							player->Revive();
+						}
 						break;
 					}
 					default:
@@ -261,6 +267,7 @@ void IOCPCore::ProcessIO()
 					if(key == -1) {
 						return;
 					}
+					break;
 				}
 				default:
 				{

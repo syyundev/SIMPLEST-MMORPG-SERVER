@@ -165,25 +165,49 @@ void Session::PostDisconnect()
 
 int Session::ProcessData(const char* const buffer, const int len)
 {
-	int processLen = 0;
+	//int processLen = 0;
 
-	while(true) {
-		int dataSize = len - processLen;
+	//for(;;) {
+	//	int dataSize = len - processLen;
 
-		if(dataSize < sizeof(PacketHeader))
+	//	if(dataSize < sizeof(PacketHeader))
+	//		break;
+
+	//	const PacketHeader header = *(reinterpret_cast<const PacketHeader*>(&buffer[processLen]));
+
+	//	if(dataSize < header.size)
+	//		break;
+
+	//	ProcessPacket(&buffer[processLen], header.size);
+
+	//	processLen += header.size;
+	//}
+
+	//return processLen;
+
+	// 시작 포인터와 끝 포인터
+	const char* ptr = buffer;
+	const char* const end = buffer + len;
+
+	// 남은 데이터가 헤더 크기보다 작으면 바로 종료
+	while(ptr + sizeof(PacketHeader) <= end) {
+		// 헤더를 안전하게 복사해서 언어 규격 위반 회피
+		PacketHeader header;
+		std::memcpy(&header, ptr, sizeof(header));
+
+		// 남은 데이터가 패킷 전체 크기보다 작으면 반복 종료
+		if(ptr + header.size > end)
 			break;
 
-		const PacketHeader header = *(reinterpret_cast<const PacketHeader*>(&buffer[processLen]));
+		// 실제 패킷 처리
+		ProcessPacket(ptr, header.size);
 
-		if(dataSize < header.size)
-			break;
-
-		ProcessPacket(&buffer[processLen], header.size);
-
-		processLen += header.size;
+		// 다음 패킷으로 이동
+		ptr += header.size;
 	}
 
-	return processLen;
+	// 처리한 총 바이트 수를 리턴
+	return static_cast<int>(ptr - buffer);
 
 }
 

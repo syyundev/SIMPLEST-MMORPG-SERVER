@@ -61,6 +61,10 @@ void MovingObject::SubHP(const int amount) noexcept
 			// TODO: Player ∫Œ»∞
 			auto player = std::static_pointer_cast<Player>(shared_from_this());
 			
+			bool expected{ true };
+			if(false == m_alive.compare_exchange_strong(expected, false))
+				return;
+
 			SC_OBJECT_STATE_PACKET sendPkt;
 			sendPkt.size = sizeof(sendPkt);
 			sendPkt.type = SC_OBJECT_STATE;

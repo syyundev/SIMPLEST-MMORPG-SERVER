@@ -18,10 +18,10 @@ bool ServerManager::Init()
 	MANAGER(Board)->Make();
 	std::uniform_int_distribution<int> random{ 0, 3 };
 
-	for(int i = 0; i < MAX_NPC; ++i) {
+	for(int i = 0; i < 1; ++i) {
 		auto monster = make_shared<Monster>();
-		const Pos pos{ randomPos(dre), randomPos(dre) };
-		// const Pos pos{ 0, 0 };
+		// const Pos pos{ randomPos(dre), randomPos(dre) };
+		const Pos pos{ 0, 0 };
 		monster->SetPos(pos);
 		monster->SetServerState(ST_INGAME);
 		auto sector = MANAGER(Board)->GetSector(monster->GetPos());
