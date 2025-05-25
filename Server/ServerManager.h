@@ -13,9 +13,7 @@ private:
 public:
 	bool		Init();
 	void		ProcessIO();
-	void Destory();
+	void		Destory();
 
-private:
-	void Work();
 };
 

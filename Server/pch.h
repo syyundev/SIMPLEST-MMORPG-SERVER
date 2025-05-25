@@ -297,18 +297,7 @@ public:
 void print_error_message(int s_err);
 
 
-struct Pos {
-	short x, y;
 
-public:
-	Pos() :x{ 0 }, y{ 0 } {}
-	explicit Pos(const short _x, const short _y) :x{ _x }, y{ _y } {}
-	auto operator<=> (const Pos&) const noexcept = default; 
-	Pos operator+(const Pos& other) const noexcept
-	{
-		return Pos{ static_cast<short>(x + other.x), static_cast<short>(y + other.y) };
-	}
-};
 
 extern std::default_random_engine dre;
 extern std::uniform_int_distribution<short> randomPos;

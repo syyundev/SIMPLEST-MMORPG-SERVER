@@ -8,11 +8,14 @@
 #include "Session.h"
 #include "SessionManager.h"
 #include "Monster.h"
+#include "TaskQueue.h"
 
 void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_LOGIN_PACKET& recvPkt)
 {
 	auto myPlayer = make_shared<Player>();
-	const Pos myPos{ randomPos(dre), randomPos(dre) };
+	static short x = 4, y = 4;
+	// const Pos myPos{ randomPos(dre), randomPos(dre) };
+	const Pos myPos{ x, y };
 
 	myPlayer->SetOwnerSession(session);
 	session->SetPlayer(myPlayer);
@@ -21,7 +24,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 	myPlayer->SetStartPos(myPos);
 	myPlayer->SetServerState(S_STATE::ST_INGAME);
 	myPlayer->SetDir(DIRECTION_TYPE::LEFT);
-
+	x++; y++;
 	MANAGER(Board)->GetSector(myPos)->Add(myPlayer->GetID());
 
 	// 나에게 정보 보내주기.
@@ -85,6 +88,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 						sendPkt.x = myPos.x;
 						sendPkt.y = myPos.y;
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
+						sendPkt.name[myPlayer->GetName().size()] = 0;
 						sendPkt.objType = myPlayer->GetObjType();
 						sendPkt.dir = myPlayer->GetDir();
 						sendPkt.hp = myPlayer->GetHP();
@@ -122,6 +126,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 					sendPkt.x = obj->GetPos().x;
 					sendPkt.y = obj->GetPos().y;
 					memcpy(sendPkt.name, obj->GetName().data(), obj->GetName().size());
+					sendPkt.name[obj->GetName().size()] = 0;
 					sendPkt.objType = obj->GetObjType();
 					if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
 						auto p = std::static_pointer_cast<Player>(obj);
@@ -149,7 +154,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 			}
 		}
 	}
-
+	MANAGER(TaskQueue)->AddTask(Task{ myPlayer->GetID(), std::chrono::high_resolution_clock::now() + 5s ,EVENT_TYPE::HEAL, 0 });
 	MANAGER(ServerObjectManager)->AddServerObject(std::move(myPlayer));
 }
 
@@ -286,6 +291,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 						sendPkt.x = myPlayer->GetPos().x;
 						sendPkt.y = myPlayer->GetPos().y;
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
+						sendPkt.name[myPlayer->GetName().size()] = 0;
 						sendPkt.objType = myPlayer->GetObjType();
 						sendPkt.dir = myPlayer->GetDir();
 						sendPkt.hp = myPlayer->GetHP();
@@ -319,10 +325,10 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 				sendPkt.x = obj->GetPos().x;
 				sendPkt.y = obj->GetPos().y;
 				memcpy(sendPkt.name, obj->GetName().data(), obj->GetName().size());
+				sendPkt.name[obj->GetName().size()] = 0;
 				sendPkt.objType = obj->GetObjType();
 				if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
 					auto p = std::static_pointer_cast<Player>(obj);
-					sendPkt.dir = p->GetDir();
 					sendPkt.dir = p->GetDir();
 					sendPkt.hp = p->GetHP();
 					sendPkt.maxHP = p->GetMaxHP();

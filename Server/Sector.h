@@ -8,7 +8,7 @@ private:
 	int mID;
 
 public:
-	mutex			m_mutex;
+	mutex					m_mutex;
 	unordered_set<int>		m_serverObjectsList;
 
 public:

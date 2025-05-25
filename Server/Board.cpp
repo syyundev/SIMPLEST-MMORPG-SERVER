@@ -5,10 +5,10 @@
 
 bool Board::CanGo(const Pos pos)
 {
-	if(m_boards[pos.y][pos.x] == TILE_TYPE::OBSTACLE)
+	if(pos.x < 0 || pos.x >= BOARD_WIDTH || pos.y < 0 || pos.y >= Board::BOARD_HEIGHT)
 		return false;
 
-	if(pos.x < 0 || pos.x >= BOARD_WIDTH || pos.y < 0 || pos.y >= Board::BOARD_HEIGHT)
+	if(m_boards[pos.y][pos.x] == TILE_TYPE::OBSTACLE)
 		return false;
 
 	return true;
@@ -16,20 +16,37 @@ bool Board::CanGo(const Pos pos)
 
 void Board::Make()
 {
-	std::ifstream ifs{ "tile_map_20x20.txt" };
+	set<Pos> tempPos;
 
-	//if(!ifs) {
-	//	cout << "Board Make Fail!";
-	//}
+	std::ifstream ifs{ "map.bin", std::ios::binary };
 
-	//int pos;
-	//while(ifs >> pos) {
-	//	for(int y = 0; y < 20; ++y) {
-	//		for(int x = 0; x < 20; ++x) {
-	//			m_boards[y][x] = static_cast<TILE_TYPE>(pos);
-	//		}
-	//	}
-	//}
+	if(!ifs) {
+		cout << "File Read Error\n";
+		return;
+	}
+
+	{
+		int count{};
+		ifs.read((char*)&count, sizeof(count));
+		Pos pos;
+		for(int i = 0; i < count; ++i) {
+			ifs.read((char*)&pos, sizeof(pos));
+			tempPos.insert(pos);
+		}
+		cout << count << "개의 장애물 읽음!" << endl;
+	}
+
+	for(int y = 0; y < m_boards.size(); ++y) {
+		for(int x = 0; x < m_boards[y].size(); ++x) {
+			Pos obstaclePos{ static_cast<short>(y),static_cast<short>(x) };
+			if(tempPos.find(obstaclePos) != tempPos.end()) {
+				m_boards[y][x] = TILE_TYPE::OBSTACLE;
+			}
+			else {
+				m_boards[y][x] = TILE_TYPE::ROAD;
+			}
+		}
+	}
 
 	for(int y = 0; y < SECTOR_Y_COUNT; ++y) {
 		for(int x = 0; x < SECTOR_X_COUNT; ++x) {
@@ -38,6 +55,8 @@ void Board::Make()
 			m_hash[sector->GetID()] = sector;
 		}
 	}
+
+	cout << "맵 생성 완료!" << endl;
 }
 
 shared_ptr<Sector> Board::GetSector(const Pos pos)
@@ -58,14 +77,14 @@ shared_ptr<Sector> Board::GetSector(const int sectorID)
 	return m_hash[sectorID];
 }
 
-std::unordered_set<int> Board::GetNeighborSectorList(const Pos pos)
+std::unordered_set<int> Board::GetNeighborSectorList(const Pos pos, const int viewRange)
 {
 	unordered_set<int> neighborSecList;
 
-	const int minViewX{ std::max(0, pos.x - VIEW_RANGE) };
-	const int maxViewX{ std::min(W_WIDTH - 1, pos.x + VIEW_RANGE) };
-	const int minViewY{ std::max(0, pos.y - VIEW_RANGE) };
-	const int maxViewY{ std::min(W_HEIGHT-1, pos.y + VIEW_RANGE) };
+	const int minViewX{ std::max(0, pos.x - viewRange) };
+	const int maxViewX{ std::min(W_WIDTH - 1, pos.x + viewRange) };
+	const int minViewY{ std::max(0, pos.y - viewRange) };
+	const int maxViewY{ std::min(W_HEIGHT - 1, pos.y + viewRange) };
 
 	int minSecX = minViewX / Board::SECTOR_SIZE;
 	int maxSecX = maxViewX / Board::SECTOR_SIZE;
@@ -89,8 +108,8 @@ std::unordered_set<int> Board::GetNeighborSectorList(const Pos pos)
 	return neighborSecList;
 }
 
-bool Board::CanSee(const Pos from, const Pos to)
+bool Board::CanSee(const Pos from, const Pos to, const int viewRange)
 {
-	if(abs(from.x - to.x) > VIEW_RANGE) return false;
-	return abs(from.y - to.y) <= VIEW_RANGE;
+	if(abs(from.x - to.x) > viewRange) return false;
+	return abs(from.y - to.y) <= viewRange;
 }

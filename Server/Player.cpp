@@ -14,6 +14,7 @@ Player::Player()
 	static atomic<int> playerID{1};
 	SetID(playerID);
 	playerID++;
+	SetHP(100);
 }
 
 Player::~Player()
@@ -52,12 +53,32 @@ void Player::Attack(const int targetID)
 	const int attackDamage = 10;
 	cout << std::format("{}번 플레이어가 {}번 몬스터에게 {}만큼 데미지를 가했습니다!", GetID(), monster->GetID(), attackDamage).c_str() << endl;
 	monster->SubHP(attackDamage);
+	monster->SetTarget(std::static_pointer_cast<Player>(shared_from_this()));
 	
 	int monsterHP = monster->GetHP();
 	if(monsterHP <= 0) {
-		const int gaiendExp = GainExp();
+		int gainedEXP{};
+		const int level = GetLevel();
+		switch(auto type = static_cast<MONSTER_TYPE>(monster->GetMonType())) {
+			case MONSTER_TYPE::PEACE_FIX:
+				gainedEXP = level * level * 2;
+				break;
+			case MONSTER_TYPE::PEACE_ROAMING:
+				gainedEXP = level * level * 2 * 2;
+				break;
+			case MONSTER_TYPE::AGRO_FIX:
+				gainedEXP = level * level * 2 * 2;
+				break;
+			case MONSTER_TYPE::AGRO_ROAMING:
+				gainedEXP = level * level * 2 * 4;
+				break;
+			default:
+				break;
+		}
 
-		cout << std::format("{}번 플레이어가 몬스터 {}번을 무찔러서 {}만큼의 경험치를 획득했습니다!", GetID(), monster->GetID(), gaiendExp) << endl;
+		AddExp(gainedEXP);
+	
+		cout << std::format("{}번 플레이어가 몬스터 {}번을 무찔러서 {}만큼의 경험치를 획득했습니다!", GetID(), monster->GetID(), gainedEXP) << endl;
 
 		SC_OBJECT_STATE_PACKET sendPkt;
 		sendPkt.size = sizeof(sendPkt);

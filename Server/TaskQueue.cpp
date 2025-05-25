@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "TaskQueue.h"
-
 #include "ServerObjectManager.h"
 #include "Monster.h"	
 #include "IOContext.h"
@@ -14,57 +13,60 @@ void TaskQueue::Init(HANDLE iocpHandle) noexcept
 
 void TaskQueue::AddTask(const Task& task)noexcept
 {
-	lock_guard<mutex> lk{ m_mutex };
 	m_taskQueue.push(task);
 }
 
-void TaskQueue::DoTask()
+void TaskQueue::ProcessTask() noexcept
 {
-	using namespace chrono;
 	do {
 		do {
-			m_mutex.lock();
-			if(m_taskQueue.empty()) {
-				m_mutex.unlock();
+			Task task;
+			if(false == m_taskQueue.try_pop(task)) {
 				break;
 			}
-
-			auto& task = m_taskQueue.top();
-			if(task.timeAfter > std::chrono::high_resolution_clock::now()) {
-				m_mutex.unlock();
-				break;
-			}
-			m_mutex.unlock();
-
-			switch(task.taskType) {
-				case TASK_TYPE::MONSTER_MOVE:
-				{
-					EventContext* context = new EventContext;
-					context->type = task.taskType;
-					PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
+			else {
+				if(task.timeAfter > std::chrono::high_resolution_clock::now()) {
+					m_taskQueue.push(task);
 					break;
 				}
-				case TASK_TYPE::MONSTER_REVIVE:
-				{
-					EventContext* context = new EventContext;
-					context->type = task.taskType;
-					PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
-					break;
-				}
-				case TASK_TYPE::PLAYER_REVIVE:
-				{
-					EventContext* context = new EventContext;
-					context->type = task.taskType;
-					PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
-					break;
-				}
-				default:
-					break;
-			}
 
-			{
-				lock_guard<mutex> lk{ m_mutex };
-				m_taskQueue.pop();
+				switch(const auto type = task.taskType) {
+					case EVENT_TYPE::HELLO:
+					{
+						// TOOD: °úÁ¦¿ë HELLO
+						break;
+					}
+					case EVENT_TYPE::MOVE:
+					{
+						EventContext* context = new EventContext;
+						context->type = task.taskType;
+						PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
+						break;
+					}
+					case EVENT_TYPE::ATTACK:
+					{
+						EventContext* context = new EventContext;
+						context->type = task.taskType;
+						PostQueuedCompletionStatus(m_iocpHandle, 1, task.targetObjID, context);
+						break;
+					}
+					case EVENT_TYPE::HEAL:
+					{
+						EventContext* context = new EventContext;
+						context->type = task.taskType;
+						PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
+						break;
+					}
+					case EVENT_TYPE::REVIVE:
+					{
+						EventContext* context = new EventContext;
+						context->type = task.taskType;
+						PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
+						break;
+					}
+					default:
+						break;
+				}
 			}
 		} while(m_flag);
 		this_thread::sleep_for(chrono::milliseconds(10));

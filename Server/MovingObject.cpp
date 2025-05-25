@@ -30,17 +30,16 @@ void MovingObject::SetExp(const int exp) noexcept
 {
 }
 
-int MovingObject::GainExp()
+
+void MovingObject::AddExp(const int amount) noexcept
 {
-	const int gainedXP = m_stat.level * m_stat.level* 2;
-	m_stat.exp += gainedXP;
+	m_stat.exp += amount;
 
 	while(m_stat.exp >= m_stat.level * 100) {
-		m_stat.exp -= m_stat.level * 100;  
-		m_stat.level++;  
+		m_stat.exp -= m_stat.level * 100;
+		m_stat.level++;
+		cout << std::format("{}번 플레이어 레벨 {}로 레벨업!", GetID(), m_stat.level.load()).c_str() << endl;
 	}
-
-	return gainedXP;
 }
 
 void MovingObject::SubHP(const int amount) noexcept
@@ -96,7 +95,7 @@ void MovingObject::SubHP(const int amount) noexcept
 			}
 
 			cout << std::format("{}번 플레이어 사망!\n", GetID());
-			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, TASK_TYPE::MONSTER_REVIVE, 0 });
+			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, EVENT_TYPE::REVIVE, 0 });
 
 			//player->SetPos(player->GetStartPos());
 			//m_stat.hp = m_stat.maxHp;
@@ -152,7 +151,7 @@ void MovingObject::SubHP(const int amount) noexcept
 				}
 			}
 
-			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, TASK_TYPE::MONSTER_REVIVE, 0 });
+			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, EVENT_TYPE::REVIVE, 0 });
 			break;
 		}
 		default:

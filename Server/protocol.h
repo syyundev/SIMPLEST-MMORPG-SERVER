@@ -14,7 +14,6 @@ constexpr char MOVE_DOWN = 1;
 constexpr char MOVE_LEFT = 2;
 constexpr char MOVE_RIGHT = 3;
 
-
 // Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
@@ -22,7 +21,6 @@ constexpr char CS_CHAT = 2;
 constexpr char CS_ATTACK = 3;			// 4 방향 공격
 constexpr char CS_TELEPORT = 4;			// RANDOM한 위치로 Teleport, Stress Test할 때 Hot Spot현상을 피하기 위해 구현	
 constexpr char CS_LOGOUT = 5;			// 클라이언트에서 정상적으로 접속을 종료하는 패킷
-
 
 constexpr char SC_LOGIN_INFO = 2;
 constexpr char SC_ADD_OBJECT = 3;
@@ -35,7 +33,7 @@ constexpr char SC_STAT_CHANGE = 9;
 
 constexpr char SC_OBJECT_STATE = 10;
 
-constexpr int VIEW_RANGE = 5; // TEST
+constexpr int VIEW_RANGE = 15; // TEST
 
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {
@@ -93,6 +91,7 @@ struct SC_ADD_OBJECT_PACKET {
 	char			name[NAME_SIZE];
 	unsigned char	objType;
 	char			dir;
+	
 	// ITEM도 오브젝트 인데, 아래의 값이 필요할까? 그냥 쓸까? 
 	// -> 그냥 쓰자 
 	int				hp;
@@ -124,13 +123,38 @@ struct SC_OBJECT_STATE_PACKET {
 };
 #pragma pack (pop)
 
-enum class TASK_TYPE {
-	PLAYER_UPDATE,
-	MONSTER_MOVE,
+struct Pos {
+	short x, y;
 
-	PLAYER_HEAL,
-	MONSTER_REVIVE,
-	PLAYER_REVIVE,
+public:
+	Pos() :x{ 0 }, y{ 0 } {}
+	explicit Pos(const short _x, const short _y) :x{ _x }, y{ _y } {}
+	auto operator<=> (const Pos&) const noexcept = default;
+	Pos operator+(const Pos& other) const noexcept
+	{
+		return Pos{ static_cast<short>(x + other.x), static_cast<short>(y + other.y) };
+	}
+	Pos operator-(const Pos& other) const noexcept
+	{
+		return Pos{ static_cast<short>(x - other.x), static_cast<short>(y - other.y) };
+	}
+};
+
+struct Stat {
+	std::atomic_int		hp;
+	int					maxHp;
+	std::atomic_int		level;
+	std::atomic_int		exp;
+};
+
+enum class EVENT_TYPE {
+	HELLO,
+	MOVE,
+	ATTACK,
+	HEAL,
+	REVIVE,
+
+	END
 };
 
 enum class OBJECT_TYPE : unsigned char {
@@ -141,15 +165,11 @@ enum class OBJECT_TYPE : unsigned char {
 	END
 };
 
-struct Stat {
-	std::atomic_int		hp;
-	int					maxHp;
-	std::atomic_int		level;
-	std::atomic_int		exp;
-};
-
 enum class MONSTER_TYPE : unsigned char {
-	DEFAULT,
+	PEACE_FIX,
+	PEACE_ROAMING,
+	AGRO_FIX,
+	AGRO_ROAMING,
 
 	END
 };

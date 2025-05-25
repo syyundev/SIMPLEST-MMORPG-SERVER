@@ -12,7 +12,7 @@ private:
 	
 public:
 	bool Init();
-	void Process();
+	void ProcessIO();
 	void Destory();
 	bool Regist(const shared_ptr<IOCPRegistrable>& object);
 	bool Regist(const SOCKET socket);

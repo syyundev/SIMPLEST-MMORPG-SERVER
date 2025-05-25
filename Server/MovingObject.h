@@ -8,8 +8,10 @@ private:
 	DIRECTION_TYPE			m_dir;
 	
 	MOVING_OBJECT_STATE		m_state;
+
 protected:
 	atomic_bool				m_alive;
+
 public:
 	explicit				MovingObject(const OBJECT_TYPE type);
 	virtual					~MovingObject();
@@ -23,9 +25,8 @@ public:
 	void					SetExp(const int exp) noexcept;
 	void					SetAlive(const bool alive)  noexcept { m_alive = alive; }
 	void					SetLevel(const int level) noexcept { m_stat.level = level; }
-	int						GainExp();
 
-	void					AddExp(const int amount) noexcept { m_stat.exp.fetch_add(amount); }
+	void					AddExp(const int amount) noexcept;
 	void					AddHP(const int amount) noexcept { m_stat.hp.fetch_add(amount); }
 	void					SubHP(const int amount) noexcept;
 	void					SubExp(const int amount) noexcept { m_stat.exp.fetch_sub(amount); }
@@ -42,8 +43,9 @@ public:
 	long long		GetLastMoveTime() const noexcept { return m_lastMoveTime; }
 	long long		GetLastAttackTime() const noexcept { return m_lastAttackTime; }
 	char			GetDir() const noexcept { return static_cast<char>(m_dir); }
-	virtual void			Attack(const int targetID) {}
+
 public:
+	virtual void			Attack(const int targetID) {}
 	virtual void Revive() {};
 
 };

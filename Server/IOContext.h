@@ -1,28 +1,5 @@
 #pragma once
 
-//class IOContext {
-//public:
-//	WSAOVERLAPPED m_sendOverlapped;
-//	char m_sendBuffer[4096];
-//	WSABUF m_sendWsaBufs[1];
-//
-//public:
-//	IOContext()
-//	{
-//		memset(&m_sendOverlapped, 0, sizeof(m_sendOverlapped));
-//	}
-//	
-//public:
-//	template<typename PacketType>
-//	void Append(PacketType&& packet)
-//	{
-//		const size_t packetSize = sizeof(std::decay_t<PacketType>);
-//		memcpy(m_sendBuffer, &packet, packetSize);
-//		m_sendWsaBufs[0].len = static_cast<ULONG>(packetSize);
-//		m_sendWsaBufs[0].buf = m_sendBuffer;
-//	}
-//};
-
 class Session;
 class IOCPRegistrable;
 class SendBuffer;
@@ -91,7 +68,7 @@ public:
 
 class EventContext : public IOContext {
 public:
-	TASK_TYPE type;
+	EVENT_TYPE type;
 
 public:
 	EventContext()

@@ -16,10 +16,12 @@ bool ServerManager::Init()
 {
 	MANAGER(SessionManager)->Init();
 	MANAGER(Board)->Make();
+	std::uniform_int_distribution<int> random{ 0, 3 };
 
 	for(int i = 0; i < MAX_NPC; ++i) {
-		auto monster = make_shared<Monster>(MONSTER_TYPE::DEFAULT);
-		Pos pos{ randomPos(dre), randomPos(dre) };
+		auto monster = make_shared<Monster>();
+		const Pos pos{ randomPos(dre), randomPos(dre) };
+		// const Pos pos{ 0, 0 };
 		monster->SetPos(pos);
 		monster->SetServerState(ST_INGAME);
 		auto sector = MANAGER(Board)->GetSector(monster->GetPos());
@@ -49,15 +51,14 @@ bool ServerManager::Init()
 
 void ServerManager::ProcessIO()
 {
-	vector<thread> threads;
+	vector<thread> ioThreads;
 
 	for(int i = 0; i < MANAGER(ThreadPool)->GetMaxWorkerThreadCount(); ++i) {
-		threads.emplace_back([this]() { Work(); });
+		ioThreads.emplace_back([]() { MANAGER(IOCPCore)->ProcessIO(); });
 	}
-	std::jthread taskThread{ []()
-{
-	MANAGER(TaskQueue)->DoTask();
-} };
+	
+	std::jthread taskThread{ []() { MANAGER(TaskQueue)->ProcessTask();} };
+
 	string str;
 	while(true) {
 		cin >> str;
@@ -72,8 +73,10 @@ void ServerManager::ProcessIO()
 			break;
 		}
 	}
-	for(auto& t : threads)
-		t.join();
+	
+	for(auto& t : ioThreads)
+		if(t.joinable())
+			t.join();
 }
 
 void ServerManager::Destory()
@@ -83,9 +86,4 @@ void ServerManager::Destory()
 	MANAGER(SessionManager)->RemoveAllSessions();
 
 	WSACleanup();
-}
-
-void ServerManager::Work()
-{
-	MANAGER(IOCPCore)->Process();
 }
