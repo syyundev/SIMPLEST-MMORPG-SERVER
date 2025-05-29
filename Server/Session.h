@@ -21,10 +21,10 @@ private:
 
 	RecvContext			mRecvContext;
 	SendContext			mSendContext;
-	
+
 	concurrency::concurrent_queue<shared_ptr<SendBuffer>> mSendQueue;
 public:
-	atomic<S_STATE>		mServerState;
+	atomic<SERVER_STATE>		mServerState;
 
 	shared_ptr<Player>	m_player;
 
@@ -41,9 +41,8 @@ public:
 	virtual void		ProcessIOCompletion(IOContext* ioContext, const DWORD numOfBytes = 0) override;
 	SOCKET				GetSocket() const noexcept { return m_socket; }
 	shared_ptr<Player>	GetPlayer() const noexcept { return m_player; }
-	
+
 public:
-	// void	Send(shared_ptr<SendBuffer> sendBuffer);
 	void	OnPostRecv(const DWORD numBytes);
 	void	OnPostSend(const DWORD numBytes);
 	void	RegistSend(std::shared_ptr<SendBuffer> sendBuffer);

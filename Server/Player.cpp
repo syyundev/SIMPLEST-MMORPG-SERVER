@@ -14,7 +14,6 @@ Player::Player()
 	static atomic<int> playerID{1};
 	SetID(playerID);
 	playerID++;
-	SetHP(100);
 }
 
 Player::~Player()
@@ -45,9 +44,8 @@ void Player::Attack(const int targetID)
 	if(false == monster->IsAlive()|| false == monster->IsActive())
 		return;
 
-	const int attackDamage = 10;
-	cout << std::format("{}번 플레이어가 {}번 몬스터에게 {}만큼 데미지를 가했습니다!", GetID(), monster->GetID(), attackDamage).c_str() << endl;
-	monster->SubHP(attackDamage);
+	cout << std::format("{}번 플레이어가 {}번 몬스터에게 {}만큼 데미지를 가했습니다!", GetID(), monster->GetID(), m_attackDamage).c_str() << endl;
+	monster->SubHP(m_attackDamage);
 	monster->SetTarget(std::static_pointer_cast<Player>(shared_from_this()));
 	
 	int monsterHP = monster->GetHP();
@@ -75,6 +73,7 @@ void Player::Attack(const int targetID)
 	
 		cout << std::format("{}번 플레이어가 몬스터 {}번을 무찔러서 {}만큼의 경험치를 획득했습니다!", GetID(), monster->GetID(), gainedEXP) << endl;
 
+		// 주변애들에게 경험치, 레벨 정보 뿌리기
 		SC_OBJECT_STATE_PACKET sendPkt;
 		sendPkt.size = sizeof(sendPkt);
 		sendPkt.type = SC_OBJECT_STATE;
@@ -89,6 +88,7 @@ void Player::Attack(const int targetID)
 		m_ownerSession.lock()->RegistSend(std::move(sendBuffer));
 	}
 
+	// 주변애들에게 경험치, 레벨 정보 뿌리기
 	SC_OBJECT_STATE_PACKET sendPkt;
 	sendPkt.size = sizeof(sendPkt);
 	sendPkt.type = SC_OBJECT_STATE;
@@ -111,9 +111,9 @@ void Player::Attack(const int targetID)
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-				if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
+				if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) continue;
 
 				if(obj->GetID() == GetID()) continue;
 
@@ -131,9 +131,6 @@ void Player::Attack(const int targetID)
 void Player::Revive()
 {
 	bool expected{ false };
-
-
-	// TODO: 나에게 ADD_OBJECT_PACKET과 SC_OBJECT_STATE_PACKET 같이 보내줘야 함.
 
 	if(m_alive.compare_exchange_strong(expected, true)) {
 		int exp = GetExp();
@@ -158,7 +155,7 @@ void Player::Revive()
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 				if(obj->GetID() == GetID()) continue;
 
@@ -202,7 +199,7 @@ void Player::Revive()
 		for(const int objID : nearList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 			if(obj->GetID() == GetID()) continue;
 
@@ -215,7 +212,7 @@ void Player::Revive()
 					if(player->m_viewList.end() != player->m_viewList.find(GetID())) {
 						player->m_viewLock.unlock();
 
-
+						// 상대에게 move packet 보내주기
 						SC_MOVE_OBJECT_PACKET sendPkt;
 						sendPkt.size = sizeof(sendPkt);
 						sendPkt.type = SC_MOVE_OBJECT;
@@ -228,6 +225,22 @@ void Player::Revive()
 						auto sendBuffer = make_shared<SendBuffer>();
 						sendBuffer->Append(sendPkt);
 						player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+
+						// 상대에게 state packet 보내주기
+						{
+							SC_OBJECT_STATE_PACKET sendPkt;
+							sendPkt.size = sizeof(sendPkt);
+							sendPkt.type = SC_OBJECT_STATE;
+							sendPkt.id = GetID();
+							sendPkt.objType = GetObjType();
+							sendPkt.hp = GetHP();
+							sendPkt.maxHP = GetMaxHP();
+							sendPkt.exp = GetExp();
+							sendPkt.level = GetLevel();
+							auto sendBuffer = make_shared<SendBuffer>();
+							sendBuffer->Append(sendPkt);
+							player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+						}
 					}
 					else {
 						player->m_viewLock.unlock();
@@ -258,7 +271,7 @@ void Player::Revive()
 				case OBJECT_TYPE::MONSTER:
 				{
 					auto monster = std::static_pointer_cast<Monster>(obj);
-					monster->WakeUp();
+					monster->WakeUp(GetID());
 					break;
 				}
 				default:
@@ -285,7 +298,7 @@ void Player::Revive()
 				}
 				else if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
 					auto m = std::static_pointer_cast<Monster>(obj);
-					sendPkt.dir = std::static_pointer_cast<Monster>(obj)->GetDir();
+					sendPkt.dir = m->GetDir();
 					sendPkt.hp = m->GetHP();
 					sendPkt.maxHP = m->GetMaxHP();
 					sendPkt.exp = m->GetExp();
@@ -303,7 +316,7 @@ void Player::Revive()
 			if(nearList.find(objID) == nearList.end()) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 				DeleteViewList(objID);
 
@@ -335,66 +348,10 @@ void Player::Revive()
 						player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
 						break;
 					}
-					case OBJECT_TYPE::MONSTER:
-					{
-						break;
-					}
-					case OBJECT_TYPE::ITEM:
-					{
-						break;
-					}
 					default:
 						break;
 				}
 			}
 		}
-
-		//MANAGER(Board)->GetSector(m_startPos)->Add(GetID());
-
-		//// TOOD: 이동 전 위치에서 SC_REMOVE_OBJECT 날려줘야함.
-		//
-		//unordered_set<int> oldViewList;
-
-
-		// 
-		//
-		//// TODO: 이동 후 SC_ADD_OBJECT_PACKET 날려줘야함.
-
-		//SC_OBJECT_STATE_PACKET sendPkt;
-		//sendPkt.size = sizeof(sendPkt);
-		//sendPkt.type = SC_OBJECT_STATE;
-		//sendPkt.id = GetID();
-		//sendPkt.hp = GetHP();
-		//sendPkt.maxHP = GetMaxHP();
-		//sendPkt.exp = GetExp();
-		//sendPkt.level = GetLevel();
-
-		//auto sendBuffer = make_shared<SendBuffer>();
-		//sendBuffer->Append(sendPkt);
-		//GetOwnerSession()->RegistSend(sendBuffer);
-
-		//auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
-
-		//for(const int secID : neighborSecList) {
-		//	auto sector = MANAGER(Board)->GetSector(secID);
-
-		//	auto objList = sector->GetObjList();
-
-		//	for(const int objID : objList) {
-		//		auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
-
-		//		if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
-
-		//		if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
-
-		//		if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
-		//			auto player = std::static_pointer_cast<Player>(obj);
-
-		//			auto sendBuffer = make_shared<SendBuffer>();
-		//			sendBuffer->Append(sendPkt);
-		//			player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
-		//		}
-		//	}
-		//}
 	}
 }

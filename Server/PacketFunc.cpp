@@ -9,23 +9,47 @@
 #include "SessionManager.h"
 #include "Monster.h"
 #include "TaskQueue.h"
+#include "Item.h"
 
 void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_LOGIN_PACKET& recvPkt)
 {
+	string name = recvPkt.name;
+
+	auto player = MANAGER(ServerObjectManager)->GetGameObject(name);
+
+	if(player != nullptr) {
+		SC_LOGIN_FAIL_PACKET sendPkt;
+		sendPkt.size = sizeof(sendPkt);
+		sendPkt.type = SC_LOGIN_FAIL;
+
+		auto sendBuffer = make_shared<SendBuffer>();
+		sendBuffer->Append(sendPkt);
+		session->RegistSend(std::move(sendBuffer));
+		return;
+	}
+
 	auto myPlayer = make_shared<Player>();
-	static short x = 4, y = 4;
-	// const Pos myPos{ randomPos(dre), randomPos(dre) };
-	const Pos myPos{ x, y };
+#ifdef PLAYER_POS_FIX
+	Pos pos{ 2,2 };
+#else
+	Pos pos{};
+	while(true) {
+	pos = Pos{ randomPos(dre), randomPos(dre) };
+
+	if(MANAGER(Board)->CanGo(pos))
+		break;
+}
+#endif
+	MANAGER(Board)->GetSector(pos)->Add(myPlayer->GetID());
 
 	myPlayer->SetOwnerSession(session);
 	session->SetPlayer(myPlayer);
 	myPlayer->SetName(recvPkt.name);
-	myPlayer->SetPos(myPos);
-	myPlayer->SetStartPos(myPos);
-	myPlayer->SetServerState(S_STATE::ST_INGAME);
+	myPlayer->SetPos(pos);
+	myPlayer->SetStartPos(pos);
+	myPlayer->SetServerState(SERVER_STATE::ST_INGAME);
 	myPlayer->SetDir(DIRECTION_TYPE::LEFT);
-	x++; y++;
-	MANAGER(Board)->GetSector(myPos)->Add(myPlayer->GetID());
+	MANAGER(Board)->GetSector(pos)->Add(myPlayer->GetID());
 
 	// 나에게 정보 보내주기.
 	{
@@ -60,7 +84,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 		// 3. 해당 위치에 해당하는 섹터들의 목록을 들고온다.
 		// 4. 들고 온 섹터들 목록을 돌면서 각 섹터가 들고 있는 오브젝트들을 가져온다.
 
-		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(myPos);
+		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(pos);
 
 		for(const int secID : neighborSecList) {
 			auto sector = MANAGER(Board)->GetSector(secID);
@@ -70,11 +94,11 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 				if(obj->GetID() == myPlayer->GetID()) continue;
 
-				if(false == MANAGER(Board)->CanSee(myPos, obj->GetPos())) continue;
+				if(false == MANAGER(Board)->CanSee(pos, obj->GetPos())) continue;
 
 				switch(auto type = static_cast<OBJECT_TYPE>(obj->GetObjType())) {
 					case OBJECT_TYPE::PLAYER:
@@ -85,8 +109,8 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 						sendPkt.size = sizeof(sendPkt);
 						sendPkt.type = SC_ADD_OBJECT;
 						sendPkt.id = myPlayer->GetID();
-						sendPkt.x = myPos.x;
-						sendPkt.y = myPos.y;
+						sendPkt.x = pos.x;
+						sendPkt.y = pos.y;
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
 						sendPkt.name[myPlayer->GetName().size()] = 0;
 						sendPkt.objType = myPlayer->GetObjType();
@@ -105,12 +129,11 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 					case OBJECT_TYPE::MONSTER:
 					{
 						auto monster = std::static_pointer_cast<Monster>(obj);
-						monster->WakeUp();   // 관찰자 추가
+						monster->WakeUp(myPlayer->GetID());   // 관찰자 추가
 						break;
 					}
 					case OBJECT_TYPE::ITEM:
 					{
-
 						break;
 					}
 					default:
@@ -154,13 +177,17 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 			}
 		}
 	}
-	MANAGER(TaskQueue)->AddTask(Task{ myPlayer->GetID(), std::chrono::high_resolution_clock::now() + 5s ,EVENT_TYPE::HEAL, 0 });
+	// MANAGER(TaskQueue)->AddTask(Task{ myPlayer->GetID(), std::chrono::high_resolution_clock::now() + 5s ,EVENT_TYPE::HEAL, 0 });
 	MANAGER(ServerObjectManager)->AddServerObject(std::move(myPlayer));
 }
 
 void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MOVE_PACKET& recvPkt)
 {
 	auto myPlayer = session->GetPlayer();
+	if(myPlayer == nullptr) return;
+	if(myPlayer->IsAlive() == false || myPlayer->GetServerState() != SERVER_STATE::ST_INGAME)
+		return;
+
 	long long current_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
 #ifdef MOVE_INTERVAL_1S
@@ -171,6 +198,9 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 		return;
 	}
 #endif
+
+	if(myPlayer->IsAlive() == false )
+		return;
 
 	const Pos prevPos{ myPlayer->GetPos() };
 	Pos nextPos{ prevPos };
@@ -209,9 +239,18 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 	if(MANAGER(Board)->CanGo(nextPos)) {
 		myPlayer->SetLastMoveTime(current_time);
 		myPlayer->SetPos(nextPos);
-		MANAGER(Board)->GetSector(nextPos)->Add(myPlayer->GetID());
+
+		auto oldSector = MANAGER(Board)->GetSector(prevPos);
+		auto newSector = MANAGER(Board)->GetSector(nextPos);
+
+		if(oldSector not_eq newSector) {
+			const int myID{ myPlayer->GetID() };
+			MANAGER(Board)->GetSector(prevPos)->Remove(myID);
+			MANAGER(Board)->GetSector(nextPos)->Add(myID);
+		}
 
 		unordered_set<int> nearList;
+
 		myPlayer->m_viewLock.lock();
 		auto oldViewList = myPlayer->m_viewList;
 		myPlayer->m_viewLock.unlock();
@@ -226,7 +265,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 				if(obj->GetID() == myPlayer->GetID()) continue;
 
@@ -254,7 +293,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 		for(const int objID : nearList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 			if(obj->GetID() == myPlayer->GetID()) continue;
 
@@ -309,14 +348,16 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 				}
 				case OBJECT_TYPE::MONSTER:
 				{
+					// 몬스터는 1초뒤 깨어나서 움직인다.
 					auto monster = std::static_pointer_cast<Monster>(obj);
-					monster->WakeUp();
+					monster->WakeUp(myPlayer->GetID());
 					break;
 				}
 				default:
 					break;
 			}
 
+			// oldViewList에 없는데, 방금 움직여서 nearList에 있다면 -> 새로 등장
 			if(oldViewList.find(objID) == oldViewList.end()) {
 				SC_ADD_OBJECT_PACKET sendPkt;
 				sendPkt.size = sizeof(sendPkt);
@@ -351,11 +392,12 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 			}
 		}
 
+		// oldViewList에 있는데, 방금 움직여서 nearList에 없다면 -> 나갔다.
 		for(const int objID : oldViewList) {
 			if(nearList.find(objID) == nearList.end()) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 				myPlayer->DeleteViewList(objID);
 
@@ -387,14 +429,6 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 						player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
 						break;
 					}
-					case OBJECT_TYPE::MONSTER:
-					{
-						break;
-					}
-					case OBJECT_TYPE::ITEM:
-					{
-						break;
-					}
 					default:
 						break;
 				}
@@ -406,6 +440,11 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_ATTACK_PACKET& recvPkt)
 {
 	auto myPlayer = session->GetPlayer();
+
+	if(myPlayer == nullptr) return;
+
+	if(myPlayer->IsAlive() == false || myPlayer->GetServerState() != SERVER_STATE::ST_INGAME)
+	return;
 
 	long long curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 #ifdef ATTACK_INTERVAL_1S
@@ -429,7 +468,7 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 		for(const int objID : objList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 			if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::MONSTER) continue;
 
@@ -445,6 +484,118 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 				if(attackPos == monsterPos) {
 					myPlayer->Attack(objID);
 					myPlayer->SetLastAttackTime(curTime);
+				}
+			}
+		}
+	}
+}
+
+void Process_CS_ITEM_PICK_UP_PACKET(const std::shared_ptr<Session>& session, const CS_ITEM_PICK_UP_PACKET& recvPkt)
+{
+	auto myPlayer = session->GetPlayer();
+
+	if(myPlayer == nullptr) return;
+
+	if(myPlayer->IsAlive() == false || myPlayer->GetServerState() != SERVER_STATE::ST_INGAME)
+		return;
+
+	const Pos myPos = myPlayer->GetPos();
+	
+	auto sectorList = MANAGER(Board)->GetNeighborSectorList(myPos);
+
+	for(const int sectorID : sectorList) {
+		const auto sector = MANAGER(Board)->GetSector(sectorID);
+
+		const auto objList = sector->GetObjList();
+
+		for(const int objID : objList) {
+			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+			if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
+
+			if(OBJECT_TYPE::ITEM != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+
+			const Pos itemPos = obj->GetPos();
+
+			// TODO: Player는 체력을 회복한다.
+			auto item = std::static_pointer_cast<Item>(obj);
+
+			if(myPos == itemPos) {
+				cout << "아이템 먹고 체력 회복!" << endl;
+				myPlayer->AddHP(10);
+
+				// 나에게 상태 정보 보내주기
+				{
+					SC_OBJECT_STATE_PACKET sendPkt;
+					sendPkt.size = sizeof(sendPkt);
+					sendPkt.type = SC_OBJECT_STATE;
+					sendPkt.id = myPlayer->GetID();
+					sendPkt.objType = myPlayer->GetObjType();
+					sendPkt.hp = myPlayer->GetHP();
+					sendPkt.maxHP = myPlayer->GetMaxHP();
+					sendPkt.exp = myPlayer->GetExp();
+					sendPkt.level = myPlayer->GetLevel();
+
+					auto sendBuffer{ make_shared<SendBuffer>() };
+					sendBuffer->Append(sendPkt);
+					session->RegistSend(std::move(sendBuffer));
+				}
+
+				{
+					SC_REMOVE_OBJECT_PACKET	 sendPkt;
+					sendPkt.size = sizeof(sendPkt);
+					sendPkt.type = SC_REMOVE_OBJECT;
+					sendPkt.id = item->GetID();
+					sendPkt.objType = item->GetObjType();
+
+					auto sendBuffer{ make_shared<SendBuffer>() };
+					sendBuffer->Append(sendPkt);
+					session->RegistSend(std::move(sendBuffer));
+				}
+
+				// Item을 먹었으면 아이템은 맵에서 사라져야 한다.
+				{
+					auto sectorList = MANAGER(Board)->GetNeighborSectorList(item->GetPos());
+					for(const int sectorID : sectorList) {
+						const auto sector = MANAGER(Board)->GetSector(sectorID);
+						const auto objList = sector->GetObjList();
+
+						for(const int objID : objList) {
+							auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+							
+							if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
+
+							if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+							{
+								SC_REMOVE_OBJECT_PACKET	 sendPkt;
+								sendPkt.size = sizeof(sendPkt);
+								sendPkt.type = SC_REMOVE_OBJECT;
+								sendPkt.id = item->GetID();
+								sendPkt.objType = item->GetObjType();
+
+								auto sendBuffer{ make_shared<SendBuffer>() };
+								sendBuffer->Append(sendPkt);
+								std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+							}
+
+							// 다른 애들에게 상태 정보 보내주기
+							{
+								SC_OBJECT_STATE_PACKET sendPkt;
+								sendPkt.size = sizeof(sendPkt);
+								sendPkt.type = SC_OBJECT_STATE;
+								sendPkt.id = myPlayer->GetID();
+								sendPkt.objType = myPlayer->GetObjType();
+								sendPkt.hp = myPlayer->GetHP();
+								sendPkt.maxHP = myPlayer->GetMaxHP();
+								sendPkt.exp = myPlayer->GetExp();
+								sendPkt.level = myPlayer->GetLevel();
+
+								auto sendBuffer{ make_shared<SendBuffer>() };
+								sendBuffer->Append(sendPkt);
+								std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+							}
+						}
+					}
 				}
 			}
 		}

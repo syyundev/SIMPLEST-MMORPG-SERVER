@@ -33,7 +33,12 @@ void TaskQueue::ProcessTask() noexcept
 				switch(const auto type = task.taskType) {
 					case EVENT_TYPE::HELLO:
 					{
-						// TOOD: 과제용 HELLO
+						#ifdef AI_LUA
+						EventContext* context = new EventContext;
+						context->type = task.taskType;
+						context->ai_target_obj = task.targetObjID;
+						PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID/*몬스터 아이디*/, context);
+						#endif
 						break;
 					}
 					case EVENT_TYPE::MOVE:

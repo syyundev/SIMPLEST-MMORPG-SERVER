@@ -28,6 +28,10 @@ private:
 	atomic_bool				m_hurt;
 
 public:
+	lua_State*				m_luaState;
+	mutex					m_ll;
+
+public:
 	Monster();
 	virtual ~Monster();
 
@@ -38,7 +42,7 @@ public:
 
 public:
 	void Move();
-	void WakeUp();
+	void WakeUp(const int wakerID);
 
 public:
 	unsigned char GetMonType() const noexcept { return static_cast<unsigned char>(m_monType); }

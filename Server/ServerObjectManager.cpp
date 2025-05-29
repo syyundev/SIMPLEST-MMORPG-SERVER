@@ -22,7 +22,25 @@ shared_ptr<ServerObject> ServerObjectManager::GetGameObject(const int id)
 	return nullptr;
 }
 
+shared_ptr<ServerObject> ServerObjectManager::GetGameObject(const string_view name)
+{
+	auto it = std::find_if(m_serverObject.cbegin(), m_serverObject.cend(), [&name](const auto& kv){         // 원자적으로 포인터를 읽어 온다
+		std::shared_ptr<ServerObject> ptr = kv.second.load(std::memory_order_acquire);
+		return ptr && ptr->GetName() == name;
+		});
+
+	if(it != m_serverObject.cend())
+		return it->second;
+
+	return nullptr;
+}
+
 void ServerObjectManager::RemoveServerObject(const int id)
 {
 	m_serverObject.at(id) = nullptr;
+}
+
+void ServerObjectManager::Broadcast()
+{
+
 }

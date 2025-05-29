@@ -11,6 +11,10 @@ private:
 public:
 	void						AddServerObject(shared_ptr<ServerObject> gameObject);
 	shared_ptr<ServerObject>	GetGameObject(const int id);
+	shared_ptr<ServerObject>	GetGameObject(const string_view name);
 	void						RemoveServerObject(const int id);
+
+public:
+	void Broadcast();
 };
 

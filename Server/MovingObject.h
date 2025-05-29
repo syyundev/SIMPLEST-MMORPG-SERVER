@@ -11,6 +11,7 @@ private:
 
 protected:
 	atomic_bool				m_alive;
+	int						m_attackDamage;
 
 public:
 	explicit				MovingObject(const OBJECT_TYPE type);

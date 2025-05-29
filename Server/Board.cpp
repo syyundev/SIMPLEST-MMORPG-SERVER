@@ -16,6 +16,7 @@ bool Board::CanGo(const Pos pos)
 
 void Board::Make()
 {
+	cout << "맵 생성 시작..." << endl;
 	set<Pos> tempPos;
 
 	std::ifstream ifs{ "map.bin", std::ios::binary };
@@ -25,15 +26,12 @@ void Board::Make()
 		return;
 	}
 
-	{
-		int count{};
-		ifs.read((char*)&count, sizeof(count));
-		Pos pos;
-		for(int i = 0; i < count; ++i) {
-			ifs.read((char*)&pos, sizeof(pos));
-			tempPos.insert(pos);
-		}
-		cout << count << "개의 장애물 읽음!" << endl;
+	int count{};
+	ifs.read((char*)&count, sizeof(count));
+	Pos pos;
+	for(int i = 0; i < count; ++i) {
+		ifs.read((char*)&pos, sizeof(pos));
+		tempPos.insert(pos);
 	}
 
 	for(int y = 0; y < m_boards.size(); ++y) {
@@ -41,6 +39,7 @@ void Board::Make()
 			Pos obstaclePos{ static_cast<short>(y),static_cast<short>(x) };
 			if(tempPos.find(obstaclePos) != tempPos.end()) {
 				m_boards[y][x] = TILE_TYPE::OBSTACLE;
+				//m_boards[y][x] = TILE_TYPE::ROAD;
 			}
 			else {
 				m_boards[y][x] = TILE_TYPE::ROAD;

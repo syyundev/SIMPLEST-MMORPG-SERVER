@@ -69,6 +69,7 @@ public:
 class EventContext : public IOContext {
 public:
 	EVENT_TYPE type;
+	int ai_target_obj;
 
 public:
 	EventContext()

@@ -7,11 +7,12 @@
 #include "Sector.h"
 #include "ServerObjectManager.h"
 #include "Session.h"
+#include "Item.h"
 
 MovingObject::MovingObject(const OBJECT_TYPE type)
-	:ServerObject(type), m_lastMoveTime{ 0 }, m_dir(DIRECTION_TYPE::LEFT), m_lastAttackTime{ 0 }, m_alive(true)
+	:ServerObject(type), m_lastMoveTime{ 0 }, m_dir(DIRECTION_TYPE::LEFT), m_lastAttackTime{ 0 }, m_alive{ true }, m_attackDamage{10}
 {
-	m_stat.hp = 100;
+	m_stat.hp = 50;
 	m_stat.maxHp = 100;
 	m_stat.exp = 0;
 	m_stat.level = 1;
@@ -53,6 +54,7 @@ void MovingObject::SubHP(const int amount) noexcept
 		return;
 	}
 
+	// 죽은 상태 
 	SetState(MOVING_OBJECT_STATE::DEAD);
 
 	switch(auto type = static_cast<OBJECT_TYPE>(GetObjType())) {
@@ -84,9 +86,9 @@ void MovingObject::SubHP(const int amount) noexcept
 				for(const int objID : objList) {
 					auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-					if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+					if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-					if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+					if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
 
 					if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
 						auto player = std::static_pointer_cast<Player>(obj);
@@ -108,14 +110,56 @@ void MovingObject::SubHP(const int amount) noexcept
 		}
 		case OBJECT_TYPE::MONSTER:
 		{
-			// TODO: 몬스터 부활
-			// 몬스터 체력이 0이되면 몬스터는 죽는다
-			// 몬스터의 상태는 죽은 상태가 되어야 한다
-			// 몬스터가 죽고 나면, 몇 초뒤 부활 할 수 있는 이벤트를 넣어줘야한다.
+			// 아이템 생성 
+			constexpr int itemProb{ 100 };
+			static std::uniform_int_distribution<int> uid{ 0,99 };
 
-			// 만약, 쓰러진 상태면 꺠우지 말아야한다.
-			//	쓰러진 위치에서 부활
-			//  채력 만땅, hp = maxHP;
+			const int randomValue{ uid(dre) };
+
+			const Pos monsterPos{ GetPos() };
+
+			if(randomValue < itemProb) {
+				auto item = make_shared<Item>(ITEM_TYPE::POTION);
+				item->SetPos(monsterPos);
+				item->SetServerState(SERVER_STATE::ST_INGAME);
+
+				SC_ADD_OBJECT_PACKET sendPkt;
+				sendPkt.size = sizeof(sendPkt);
+				sendPkt.type = SC_ADD_OBJECT;
+				sendPkt.id = item->GetID();
+				sendPkt.x = item->GetPos().x;
+				sendPkt.y = item->GetPos().y;
+				memcpy(sendPkt.name, item->GetName().data(), item->GetName().size());
+				sendPkt.objType = item->GetObjType();
+				sendPkt.detail = static_cast<unsigned char>(ITEM_TYPE::POTION);
+				MANAGER(Board)->GetSector(item->GetPos())->Add(item->GetID());
+				MANAGER(ServerObjectManager)->AddServerObject(std::move(item));
+
+				auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(monsterPos);
+
+				for(const int secID : neighborSecList) {
+					auto sector = MANAGER(Board)->GetSector(secID);
+
+					auto objList = sector->GetObjList();
+
+					for(const int objID : objList) {
+						auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+						if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
+
+						if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+
+						if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
+							auto player = std::static_pointer_cast<Player>(obj);
+
+							auto sendBuffer = make_shared<SendBuffer>();
+							sendBuffer->Append(sendPkt);
+							player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+						}
+					}
+				}
+			}
+
 			cout << std::format("{}번 몬스터 사망!\n", GetID());
 			bool expected{ true };
 			if(false == m_alive.compare_exchange_strong(expected, false))
@@ -141,9 +185,9 @@ void MovingObject::SubHP(const int amount) noexcept
 				for(const int objID : objList) {
 					auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-					if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+					if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-					if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+					if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
 
 					if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
 						auto player = std::static_pointer_cast<Player>(obj);

@@ -68,6 +68,9 @@
     <ClCompile Include="Item.cpp">
       <Filter>02. ServerObjectManager\00. ServerObject\00. StaticObject\00. Item</Filter>
     </ClCompile>
+    <ClCompile Include="func.cpp">
+      <Filter>98. Headers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ServerObject.h">
@@ -142,6 +145,9 @@
     <ClInclude Include="Item.h">
       <Filter>02. ServerObjectManager\00. ServerObject\00. StaticObject\00. Item</Filter>
     </ClInclude>
+    <ClInclude Include="func.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="02. Board">
@@ -213,5 +219,18 @@
     <Filter Include="02. ServerObjectManager\00. ServerObject\00. StaticObject\00. Item">
       <UniqueIdentifier>{d07122d0-001f-4556-9614-fa139e56fd7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="95. Script">
+      <UniqueIdentifier>{42235137-07a1-42de-8cf4-f8b95f524689}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lua54.lib">
+      <Filter>95. Script</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="npc.lua">
+      <Filter>95. Script</Filter>
+    </None>
   </ItemGroup>
 </Project>

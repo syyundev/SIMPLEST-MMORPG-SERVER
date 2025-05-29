@@ -5,7 +5,7 @@ class ServerObject;
 class Sector {
 private:
 	int mIndexX, mIndexY;
-	int mID;
+	int						mID;
 
 public:
 	mutex					m_mutex;

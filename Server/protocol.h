@@ -3,11 +3,11 @@ constexpr int BUF_SIZE = 200;
 constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 100;
 
-constexpr int MAX_USER = 10000;
-constexpr int MAX_NPC = 200000;
+constexpr int MAX_USER = 10'000;
+constexpr int MAX_NPC = 200'000;
 
-constexpr int W_WIDTH = 2000;
-constexpr int W_HEIGHT = 2000;
+constexpr int W_WIDTH = 2'000;
+constexpr int W_HEIGHT = 2'000;
 
 constexpr char MOVE_UP = 0;
 constexpr char MOVE_DOWN = 1;	
@@ -21,6 +21,7 @@ constexpr char CS_CHAT = 2;
 constexpr char CS_ATTACK = 3;			// 4 방향 공격
 constexpr char CS_TELEPORT = 4;			// RANDOM한 위치로 Teleport, Stress Test할 때 Hot Spot현상을 피하기 위해 구현	
 constexpr char CS_LOGOUT = 5;			// 클라이언트에서 정상적으로 접속을 종료하는 패킷
+constexpr char CS_ITEM_PICK_UP = 6;
 
 constexpr char SC_LOGIN_INFO = 2;
 constexpr char SC_ADD_OBJECT = 3;
@@ -30,10 +31,9 @@ constexpr char SC_CHAT = 6;
 constexpr char SC_LOGIN_OK = 7;
 constexpr char SC_LOGIN_FAIL = 8;
 constexpr char SC_STAT_CHANGE = 9;
-
 constexpr char SC_OBJECT_STATE = 10;
 
-constexpr int VIEW_RANGE = 15; // TEST
+constexpr int VIEW_RANGE = 7; // TEST
 
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {
@@ -42,14 +42,12 @@ struct CS_LOGIN_PACKET {
 	char	name[NAME_SIZE];
 };
 
-
 struct CS_MOVE_PACKET {
 	unsigned char	size;
 	char			type;
 	char			direction;  // 0 : UP, 1 : DOWN, 2 : LEFT, 3 : RIGHT
 	unsigned		move_time;
 };
-
 
 struct CS_ATTACK_PACKET {
 	unsigned char size;
@@ -58,6 +56,11 @@ struct CS_ATTACK_PACKET {
 	long long attack_time;
 };
 
+struct CS_ITEM_PICK_UP_PACKET {
+	unsigned char size;
+	char	type;
+	int		id;
+};
 
 struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
@@ -72,6 +75,10 @@ struct SC_LOGIN_INFO_PACKET {
 	char	dir;
 };
 
+struct SC_LOGIN_FAIL_PACKET {
+	unsigned char size;
+	char	type;
+};
 
 struct SC_MOVE_OBJECT_PACKET {
 	unsigned char size;
@@ -81,7 +88,6 @@ struct SC_MOVE_OBJECT_PACKET {
 	unsigned int move_time;
 	char		dir;
 };
-
 
 struct SC_ADD_OBJECT_PACKET {
 	unsigned char	size;
@@ -102,14 +108,12 @@ struct SC_ADD_OBJECT_PACKET {
 	unsigned char	detail;
 };
 
-
 struct SC_REMOVE_OBJECT_PACKET {
 	unsigned char	size;
 	char			type;
 	int				id;
 	unsigned char	objType;
 };
-
 
 struct SC_OBJECT_STATE_PACKET {
 	unsigned char	size;
@@ -121,6 +125,14 @@ struct SC_OBJECT_STATE_PACKET {
 	int				exp;
 	int				level;
 };
+
+struct SC_CHAT_PACKET {
+	unsigned char	size;
+	char			type;
+	int				id;
+	char			chat[CHAT_SIZE];
+};
+
 #pragma pack (pop)
 
 struct Pos {
@@ -179,6 +191,7 @@ enum class ITEM_TYPE : unsigned char {
 	SWORD,
 	PISTOL,
 
+	END
 };
 
 enum class DIRECTION_TYPE : char {

@@ -63,18 +63,6 @@ void Session::ProcessIOCompletion(IOContext* ioContext, const DWORD numOfBytes)
 	}
 }
 
-//void Session::Send(shared_ptr<SendBuffer> sendBuffer)
-//{
-//	mSendContext.Init();
-//	mSendContext.owner = shared_from_this();
-//
-//	WSABUF wsaBuf;
-//	wsaBuf.buf = (char*)sendBuffer->GetBuffer();
-//	wsaBuf.len = sendBuffer->GetDataSize();
-//
-//	WSASend(m_socket, &wsaBuf, 1, 0, 0, &mSendContext, nullptr);
-//}
-
 void Session::OnPostRecv(const DWORD numBytes)
 {
 	mRecvContext.owner = nullptr;
@@ -128,20 +116,25 @@ void Session::ProcessConnect()
 
 void Session::PostDisconnect()
 {
+	shared_ptr<Sector> sector = MANAGER(Board)->GetSector(Pos{ m_player->GetPos().x, m_player->GetPos().y });
+	sector->Remove(m_player->GetID());
+	MANAGER(ServerObjectManager)->RemoveServerObject(m_id);
+	mConnected = false;
+
+	MANAGER(SessionManager)->RemoveSession(m_id);
+	
 	m_player->m_viewLock.lock();
 	unordered_set<int> vl = m_player->m_viewList;
 	m_player->m_viewLock.unlock();
 
-	for(int id : vl) {
+	for(const int id : vl) {
 		shared_ptr<ServerObject> serverObject = MANAGER(ServerObjectManager)->GetGameObject(id);
 
 		if(serverObject == nullptr)
 			continue;
 
-		if(serverObject->GetSeverState() != ST_INGAME)
-			continue;
 
-		if(id == m_id)
+		if(serverObject->GetServerState() != ST_INGAME)
 			continue;
 
 		if(static_cast<OBJECT_TYPE>(serverObject->GetObjType()) != OBJECT_TYPE::PLAYER)
@@ -157,34 +150,10 @@ void Session::PostDisconnect()
 		std::static_pointer_cast<Player>(serverObject)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
 
 	}
-	shared_ptr<Sector> sector = MANAGER(Board)->GetSector(Pos{ m_player->GetPos().x, m_player->GetPos().y });
-	sector->Remove(m_player->GetID());
-	MANAGER(ServerObjectManager)->RemoveServerObject(m_id);
-	MANAGER(SessionManager)->RemoveSession(m_id);
 }
 
 int Session::ProcessData(const char* const buffer, const int len)
 {
-	//int processLen = 0;
-
-	//for(;;) {
-	//	int dataSize = len - processLen;
-
-	//	if(dataSize < sizeof(PacketHeader))
-	//		break;
-
-	//	const PacketHeader header = *(reinterpret_cast<const PacketHeader*>(&buffer[processLen]));
-
-	//	if(dataSize < header.size)
-	//		break;
-
-	//	ProcessPacket(&buffer[processLen], header.size);
-
-	//	processLen += header.size;
-	//}
-
-	//return processLen;
-
 	// 시작 포인터와 끝 포인터
 	const char* ptr = buffer;
 	const char* const end = buffer + len;
@@ -229,6 +198,11 @@ void Session::ProcessPacket(const char* const buffer, const int packetSize)
 		case CS_ATTACK:
 		{
 			Process_CS_ATTACK_PACKET(std::static_pointer_cast<Session>(shared_from_this()), *(reinterpret_cast<const CS_ATTACK_PACKET*>(buffer)));
+			break;
+		}
+		case CS_ITEM_PICK_UP:
+		{
+			Process_CS_ITEM_PICK_UP_PACKET(std::static_pointer_cast<Session>(shared_from_this()), *(reinterpret_cast<const CS_ITEM_PICK_UP_PACKET*>(buffer)));
 			break;
 		}
 		default:

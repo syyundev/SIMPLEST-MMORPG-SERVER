@@ -13,9 +13,14 @@ friend class Singleton;
 #define NOMINMAX
 #define ENABLE_VIEW_PROCESSING
 #define ENABLE_SPACE_DEVISION
+#define _CRT_SECURE_NO_WARNINGS
 
 // #define MOVE_INTERVAL_1S
 // #define ATTACK_INTERVAL_1S
+
+#define PLAYER_POS_FIX
+// #define MAX_MONSTER
+// S#define AI_LUA
 
 #include <iostream>
 // STL
@@ -128,6 +133,7 @@ using std::packaged_task;
 #include <latch>
 #include <barrier>
 #include <atomic>
+#include <shared_mutex>
 using std::array;
 
 
@@ -154,7 +160,7 @@ using namespace  std;
 
 extern inline constinit thread_local unsigned int TLS_ThreadID = 0;
 
-enum S_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
+enum SERVER_STATE { ST_FREE, ST_ALLOC, ST_INGAME };
 
 enum class KEY_INPUT : unsigned char {
 	UP,
@@ -296,11 +302,9 @@ public:
 
 void print_error_message(int s_err);
 
-
-
-
 extern std::default_random_engine dre;
 extern std::uniform_int_distribution<short> randomPos;
 #include "PacketFunc.h"
 #include "SendBuffer.h"
-#include <shared_mutex>
+#include "..\Include\lua.hpp"
+#include "func.h"

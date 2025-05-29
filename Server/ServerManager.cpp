@@ -18,16 +18,29 @@ bool ServerManager::Init()
 	MANAGER(Board)->Make();
 	std::uniform_int_distribution<int> random{ 0, 3 };
 
-	for(int i = 0; i < 1; ++i) {
+#ifdef MAX_MONSTER
+	constexpr int monsterCount = MAX_NPC;
+#else
+	constexpr int monsterCount = 1;
+#endif
+	cout << monsterCount << "개의 몬스터 생성 시작..." << endl;
+
+	for(int i = 0; i < monsterCount; ++i) {
 		auto monster = make_shared<Monster>();
-		// const Pos pos{ randomPos(dre), randomPos(dre) };
-		const Pos pos{ 0, 0 };
+		Pos pos{1,1};
+		/*while(true) {
+			pos = Pos{randomPos(dre), randomPos(dre) };
+			
+			if(MANAGER(Board)->CanGo(pos))
+				break;
+		}*/
 		monster->SetPos(pos);
 		monster->SetServerState(ST_INGAME);
 		auto sector = MANAGER(Board)->GetSector(monster->GetPos());
 		sector->Add(monster->GetID());
 		MANAGER(ServerObjectManager)->AddServerObject(std::move(monster));
 	}
+	cout << monsterCount << "개의 몬스터 생성 완료!" << endl;
 
 	if(false == MANAGER(ThreadPool)->Init())
 		return false;
@@ -53,9 +66,8 @@ void ServerManager::ProcessIO()
 {
 	vector<thread> ioThreads;
 
-	for(int i = 0; i < MANAGER(ThreadPool)->GetMaxWorkerThreadCount(); ++i) {
+	for(int i = 0; i < MANAGER(ThreadPool)->GetMaxWorkerThreadCount(); ++i)
 		ioThreads.emplace_back([]() { MANAGER(IOCPCore)->ProcessIO(); });
-	}
 	
 	std::jthread taskThread{ []() { MANAGER(TaskQueue)->ProcessTask();} };
 

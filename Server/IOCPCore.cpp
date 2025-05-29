@@ -43,7 +43,30 @@ void IOCPCore::ProcessIO()
 				switch(const auto type = eventContext->type) {
 					case EVENT_TYPE::HELLO:
 					{
+#ifdef AI_LUA
+						const int id = static_cast<int>(key);
+						auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
+						if(obj == nullptr) {
+							delete ioContext;
+							continue;
+						}
 
+						if(obj->GetSeverState() != S_STATE::ST_INGAME) {
+							delete ioContext;
+							continue;
+						}
+
+						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
+							auto monster = std::static_pointer_cast<Monster>(obj);
+							monster->m_ll.lock();
+							auto L = monster->m_luaState;
+							lua_getglobal(L, "event_player_move");
+							lua_pushnumber(L, eventContext->ai_target_obj);
+							lua_pcall(L, 1, 0, 0);
+							monster->m_ll.unlock();
+						}
+						delete ioContext;
+#endif
 						break;
 					}
 					case EVENT_TYPE::MOVE:
@@ -55,7 +78,7 @@ void IOCPCore::ProcessIO()
 							continue;
 						}
 
-						if(obj->GetSeverState() != S_STATE::ST_INGAME) {
+						if(obj->GetServerState() != SERVER_STATE::ST_INGAME) {
 							delete ioContext;
 							continue;
 						}
@@ -77,9 +100,9 @@ void IOCPCore::ProcessIO()
 								for(const int objID : objList) {
 									auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-									if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+									if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
+									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) continue;
 
 									if(MANAGER(Board)->CanSee(monster->GetPos(), obj->GetPos())) {
 										keepAlive = true;
@@ -108,7 +131,7 @@ void IOCPCore::ProcessIO()
 							continue;
 						}
 
-						if(obj->GetSeverState() != S_STATE::ST_INGAME) {
+						if(obj->GetServerState() != SERVER_STATE::ST_INGAME) {
 							delete ioContext;
 							continue;
 						}
@@ -122,7 +145,7 @@ void IOCPCore::ProcessIO()
 								delete ioContext;
 								continue;
 							}
-							
+
 							player->SubHP(10);
 
 							SC_OBJECT_STATE_PACKET sendPkt;
@@ -150,9 +173,9 @@ void IOCPCore::ProcessIO()
 								for(const int objID : objList) {
 									auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-									if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+									if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
+									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) continue;
 
 									if(MANAGER(Board)->CanSee(player->GetPos(), obj->GetPos())) {
 										auto sendBuffer = make_shared<SendBuffer>();
@@ -171,7 +194,7 @@ void IOCPCore::ProcessIO()
 						const int id = static_cast<int>(key);
 						auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
 
-						if(obj == nullptr || obj->GetSeverState() != ST_INGAME) {
+						if(obj == nullptr || obj->GetServerState() != ST_INGAME) {
 							delete ioContext;
 							continue;
 						}
@@ -215,7 +238,7 @@ void IOCPCore::ProcessIO()
 							for(const int objID : objList) {
 								auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-								if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+								if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 								if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
 
@@ -290,7 +313,7 @@ void IOCPCore::ProcessIO()
 									continue;
 								}
 
-								if(obj->GetSeverState() != S_STATE::ST_INGAME) {
+								if(obj->GetServerState() != SERVER_STATE::ST_INGAME) {
 									delete ioContext;
 									continue;
 								}
@@ -316,7 +339,7 @@ void IOCPCore::ProcessIO()
 										for(const int objID : objList) {
 											auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-											if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+											if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 											if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
 
@@ -347,7 +370,7 @@ void IOCPCore::ProcessIO()
 									continue;
 								}
 
-								if(obj->GetSeverState() != S_STATE::ST_INGAME) {
+								if(obj->GetServerState() != SERVER_STATE::ST_INGAME) {
 									delete ioContext;
 									continue;
 								}
@@ -387,7 +410,7 @@ void IOCPCore::ProcessIO()
 										for(const int objID : objList) {
 											auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-											if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+											if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 											if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
 
@@ -408,7 +431,7 @@ void IOCPCore::ProcessIO()
 								const int id = static_cast<int>(key);
 								auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
 
-								if(obj == nullptr || obj->GetSeverState() != ST_INGAME) {
+								if(obj == nullptr || obj->GetServerState() != ST_INGAME) {
 									delete ioContext;
 									continue;
 								}
@@ -452,7 +475,7 @@ void IOCPCore::ProcessIO()
 									for(const int objID : objList) {
 										auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-										if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+										if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 										if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
 

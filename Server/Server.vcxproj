@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
+    <ClCompile Include="func.cpp" />
     <ClCompile Include="IOContext.cpp" />
     <ClCompile Include="IOCPCore.cpp" />
     <ClCompile Include="IOCPRegistrable.cpp" />
@@ -178,6 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
+    <ClInclude Include="func.h" />
     <ClInclude Include="IOContext.h" />
     <ClInclude Include="IOCPCore.h" />
     <ClInclude Include="IOCPRegistrable.h" />
@@ -201,6 +203,12 @@
     <ClInclude Include="StaticObject.h" />
     <ClInclude Include="TaskQueue.h" />
     <ClInclude Include="ThreadPool.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lua54.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="npc.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

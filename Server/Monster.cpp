@@ -15,27 +15,41 @@ Monster::Monster()
 	static int monsterID = 30000;
 	SetID(monsterID);
 
-	//if(monsterID < 80'000) {
-	//	m_monType = MONSTER_TYPE::PEACE_FIX;
-	//	SetName("M_PF_" + to_string(monsterID));
-	//}
-	//else if(monsterID < 130'000) {
-	//	m_monType = MONSTER_TYPE::PEACE_ROAMING;
-	//	SetName("M_PR_" + to_string(monsterID));
-	//}
-	//else if(monsterID < 180'000) {
-	//	m_monType = MONSTER_TYPE::AGRO_FIX;
-	//	SetName("M_AF_" + to_string(monsterID));
-	//}
-	//else {
-	//	m_monType = MONSTER_TYPE::AGRO_ROAMING;
-	//	SetName("M_AR_" + to_string(monsterID));
-	//}
-
-	m_monType = MONSTER_TYPE::AGRO_ROAMING;
-	SetName("M_AR_" + to_string(monsterID));
+	if(monsterID < 80'000) {
+		m_monType = MONSTER_TYPE::PEACE_FIX;
+		SetName("M_PF_" + to_string(monsterID));
+	}
+	else if(monsterID < 130'000) {
+		m_monType = MONSTER_TYPE::PEACE_ROAMING;
+		SetName("M_PR_" + to_string(monsterID));
+	}
+	else if(monsterID < 180'000) {
+		m_monType = MONSTER_TYPE::AGRO_FIX;
+		SetName("M_AF_" + to_string(monsterID));
+	}
+	else {
+		m_monType = MONSTER_TYPE::AGRO_ROAMING;
+		SetName("M_AR_" + to_string(monsterID));
+	}
 
 	monsterID++;
+
+#ifdef AI_LUA
+	auto L = m_luaState = luaL_newstate();
+	luaL_openlibs(L);
+	luaL_loadfile(L, "npc.lua");
+	lua_pcall(L, 0, 0, 0);
+
+	lua_getglobal(L, "set_uid");
+	lua_pushnumber(L, GetID());
+	lua_pcall(L, 1, 0, 0);
+
+	lua_register(L, "API_SendMessage", API_SendMessage);
+	lua_register(L, "API_get_x", API_get_x);
+	lua_register(L, "API_get_y", API_get_y);
+	lua_register(L, "API_RANDOM_X", API_get_random_x);
+	lua_register(L, "API_RANDOM_Y", API_get_random_y);
+#endif
 }
 
 Monster::~Monster()
@@ -59,9 +73,9 @@ void Monster::Move()
 		for(const int objID : objList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-			if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+			if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
 
 			if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos()))
 				oldViewList.insert(objID);
@@ -132,9 +146,9 @@ void Monster::Move()
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-				if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+				if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
 
 				if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos()))
 					newViewList.insert(objID);
@@ -144,7 +158,7 @@ void Monster::Move()
 		for(const int objID : newViewList) {
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-			if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+			if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 			auto player = std::static_pointer_cast<Player>(obj);
 
@@ -180,7 +194,13 @@ void Monster::Move()
 				sendPkt.move_time = static_cast<int>(GetLastMoveTime());
 				auto sendBuffer = make_shared<SendBuffer>();
 				sendBuffer->Append(sendPkt);
-				player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+				if(player) {
+					const auto session = player->GetOwnerSession();
+					if(session == nullptr)
+						continue;
+
+					session->RegistSend(std::move(sendBuffer));
+				}
 			}
 		}
 
@@ -218,11 +238,13 @@ void Monster::Move()
 	SetLastMoveTime(current_time);
 }
 
-void Monster::WakeUp()
+void Monster::WakeUp(const int wakerID)
 {
+	MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() +1ms, EVENT_TYPE::HELLO, wakerID });
+
 	if(IsAlive() == false)
 		return;
-
+	
 	if(m_isActive == true)
 		return;
 
@@ -248,11 +270,14 @@ void Monster::Revive()
 	if(m_alive.compare_exchange_strong(expected, true)) {
 		SetHP(GetMaxHP());
 		SetAlive(true);
+		SetActive(false);
 		SetState(MOVING_OBJECT_STATE::IDLE);
+		m_target.reset();
 
 		SC_OBJECT_STATE_PACKET sendPkt;
 		sendPkt.size = sizeof(sendPkt);
 		sendPkt.type = SC_OBJECT_STATE;
+		sendPkt.objType = GetObjType();
 		sendPkt.id = GetID();
 		sendPkt.hp = GetHP();
 		sendPkt.maxHP = GetMaxHP();
@@ -269,11 +294,12 @@ void Monster::Revive()
 			for(const int objID : objList) {
 				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 
-				if(obj == nullptr || obj->GetSeverState() != ST_INGAME) continue;
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-				if(OBJECT_TYPE::MONSTER == static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+				if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
 
 				if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
+
 					auto player = std::static_pointer_cast<Player>(obj);
 
 					auto sendBuffer = make_shared<SendBuffer>();
@@ -362,7 +388,8 @@ void Monster::Trace()
 	else {
 		auto target = m_target.lock();
 		if(target != nullptr && target->IsAlive()) {
-			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s, EVENT_TYPE::ATTACK, target->GetID() });
+			const int targetID = target->GetID();
+			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s, EVENT_TYPE::ATTACK, targetID });
 		}
 	}
 }
@@ -370,7 +397,7 @@ void Monster::Trace()
 void Monster::RandomMove()
 {
 	// 20x20 위치를 자유롭게...
-	static constexpr int RADIUS = 10;  
+	static constexpr int MOVE_RADIUS = 10;  
 	
 	const Pos prevPos{ GetPos() };
 	
@@ -397,9 +424,17 @@ void Monster::RandomMove()
 			break;
 	}
 
-	if(std::abs(nextPos.x - prevPos.x) <= RADIUS
-		&& std::abs(nextPos.y - prevPos.y) <= RADIUS
-		&& MANAGER(Board)->CanGo(nextPos)) {
+	if(std::abs(nextPos.x - prevPos.x) <= MOVE_RADIUS
+		&& std::abs(nextPos.y - prevPos.y) <= MOVE_RADIUS
+		&& MANAGER(Board)->CanGo(nextPos)) 
+	{
+		auto oldSector = MANAGER(Board)->GetSector(prevPos);
+		auto newSector = MANAGER(Board)->GetSector(nextPos);
+
+		if(oldSector not_eq newSector) {
+			oldSector->Remove(GetID());
+			newSector->Add(GetID());
+		}
 		SetPos(nextPos);
 	}
 }
@@ -421,7 +456,7 @@ bool Monster::SearchTarget()
 			if(objID == GetID())
 				continue;
 
-			if(obj == nullptr || obj->GetSeverState() != S_STATE::ST_INGAME || static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER)
+			if(obj == nullptr || obj->GetServerState() != SERVER_STATE::ST_INGAME || static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER)
 				continue;
 
 			const Pos objPos = obj->GetPos();
