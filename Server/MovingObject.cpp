@@ -60,7 +60,6 @@ void MovingObject::SubHP(const int amount) noexcept
 	switch(auto type = static_cast<OBJECT_TYPE>(GetObjType())) {
 		case OBJECT_TYPE::PLAYER:
 		{
-			// TODO: Player 부활
 			auto player = std::static_pointer_cast<Player>(shared_from_this());
 			
 			bool expected{ true };
@@ -102,10 +101,6 @@ void MovingObject::SubHP(const int amount) noexcept
 
 			cout << std::format("{}번 플레이어 사망!\n", GetID());
 			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, EVENT_TYPE::REVIVE, 0 });
-
-			//player->SetPos(player->GetStartPos());
-			//m_stat.hp = m_stat.maxHp;
-			//m_stat.exp.store(m_stat.exp / 2);
 			break;
 		}
 		case OBJECT_TYPE::MONSTER:

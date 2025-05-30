@@ -18,8 +18,8 @@ friend class Singleton;
 // #define MOVE_INTERVAL_1S
 // #define ATTACK_INTERVAL_1S
 
-#define PLAYER_POS_FIX
-// #define MAX_MONSTER
+// #define PLAYER_POS_FIX
+#define MAX_MONSTER
 // S#define AI_LUA
 
 #include <iostream>
@@ -136,6 +136,9 @@ using std::packaged_task;
 #include <shared_mutex>
 using std::array;
 
+
+#include <print>
+#include <format>	
 
 #include <concurrent_unordered_map.h>
 #include <concurrent_queue.h>

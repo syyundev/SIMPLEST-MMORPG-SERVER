@@ -133,7 +133,6 @@ void Session::PostDisconnect()
 		if(serverObject == nullptr)
 			continue;
 
-
 		if(serverObject->GetServerState() != ST_INGAME)
 			continue;
 
@@ -148,7 +147,6 @@ void Session::PostDisconnect()
 		auto sendBuffer = std::make_shared<SendBuffer>();
 		sendBuffer->Append(sendPkt);
 		std::static_pointer_cast<Player>(serverObject)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
-
 	}
 }
 

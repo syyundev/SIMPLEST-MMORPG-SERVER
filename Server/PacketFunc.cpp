@@ -177,7 +177,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 			}
 		}
 	}
-	// MANAGER(TaskQueue)->AddTask(Task{ myPlayer->GetID(), std::chrono::high_resolution_clock::now() + 5s ,EVENT_TYPE::HEAL, 0 });
+	MANAGER(TaskQueue)->AddTask(Task{ myPlayer->GetID(), std::chrono::high_resolution_clock::now() + 5s ,EVENT_TYPE::HEAL, 0 });
 	MANAGER(ServerObjectManager)->AddServerObject(std::move(myPlayer));
 }
 
@@ -554,6 +554,10 @@ void Process_CS_ITEM_PICK_UP_PACKET(const std::shared_ptr<Session>& session, con
 				}
 
 				// Item을 먹었으면 아이템은 맵에서 사라져야 한다.
+				// 1. Sector에서 삭제
+				// 2. ServerObjectManager에서 삭제
+		
+
 				{
 					auto sectorList = MANAGER(Board)->GetNeighborSectorList(item->GetPos());
 					for(const int sectorID : sectorList) {
@@ -595,6 +599,13 @@ void Process_CS_ITEM_PICK_UP_PACKET(const std::shared_ptr<Session>& session, con
 								std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
 							}
 						}
+					}
+
+					{
+						auto sector = MANAGER(Board)->GetSector(itemPos);
+						const int itemID = item->GetID();
+						sector->Remove(itemID);
+						MANAGER(ServerObjectManager)->RemoveServerObject(itemID);
 					}
 				}
 			}

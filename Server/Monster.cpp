@@ -82,13 +82,14 @@ void Monster::Move()
 		}
 	}
 
+
 	switch(m_monType) {
 		case MONSTER_TYPE::PEACE_FIX:
 		{
 			auto target = m_target.lock();
 			if(target == nullptr)
 				return;
-			
+
 			Trace();
 			break;
 		}
@@ -130,7 +131,9 @@ void Monster::Move()
 		default:
 			break;
 	}
-
+#ifdef DEBUG
+	cout << "Monster MOVE!" << endl;
+#endif
 	SetState(MOVING_OBJECT_STATE::MOVE);
 
 	unordered_set<int> newViewList;
@@ -233,18 +236,20 @@ void Monster::Move()
 
 	long long current_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 	if(30'000 == GetID()) {
+#ifdef DEBUG
 		std::cout << "MOVE: " << current_time - GetLastMoveTime() << "ms \n";
+#endif
 	}
 	SetLastMoveTime(current_time);
 }
 
 void Monster::WakeUp(const int wakerID)
 {
-	MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() +1ms, EVENT_TYPE::HELLO, wakerID });
+	MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1ms, EVENT_TYPE::HELLO, wakerID });
 
 	if(IsAlive() == false)
 		return;
-	
+
 	if(m_isActive == true)
 		return;
 
@@ -254,23 +259,82 @@ void Monster::WakeUp(const int wakerID)
 		return;
 	}
 	else {
+#ifdef DEBUG
+		println("{} WakeUp!", GetID());
+#endif
 		MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s , EVENT_TYPE::MOVE, 0 });
 	}
 }
 
 void Monster::Attack(const int targetID)
 {
+	auto obj = MANAGER(ServerObjectManager)->GetGameObject(targetID);
 
+	if(obj == nullptr || SERVER_STATE::ST_INGAME != obj->GetServerState())
+		return;
+
+	if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType()))
+		return;
+
+	auto target = std::static_pointer_cast<Player>(obj);
+
+	target->SubHP(10);
+
+	if(target->GetHP() == 0)
+		m_target.reset();
+
+	SC_OBJECT_STATE_PACKET sendPkt;
+	sendPkt.size = sizeof(sendPkt);
+	sendPkt.type = SC_OBJECT_STATE;
+	sendPkt.id = target->GetID();
+	sendPkt.objType = target->GetObjType();
+	sendPkt.hp = target->GetHP();
+	sendPkt.maxHP = target->GetMaxHP();
+	sendPkt.level = target->GetLevel();
+	sendPkt.exp = target->GetExp();
+	auto sendBuffer = make_shared<SendBuffer>();
+	sendBuffer->Append(sendPkt);
+	target->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+
+	const Pos pos = target->GetPos();
+
+	auto sectorList = MANAGER(Board)->GetNeighborSectorList(pos);
+
+	for(const int secID : sectorList) {
+		auto sector = MANAGER(Board)->GetSector(secID);
+
+		auto objList = sector->GetObjList();
+
+		for(const int objID : objList) {
+			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+			if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
+
+			if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) continue;
+
+			if(MANAGER(Board)->CanSee(target->GetPos(), obj->GetPos())) {
+				auto sendBuffer = make_shared<SendBuffer>();
+				sendBuffer->Append(sendPkt);
+				std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+			}
+		}
+	}
 }
 
 void Monster::Revive()
 {
+	// 부활 후, 계속 보고 있는 상태에서 플레이어 몬스터 공격 시, 몬스터는 빨리 움직임
+
 	bool expected{ false };
 
 	if(m_alive.compare_exchange_strong(expected, true)) {
+		std::println("{}번 몬스터 부활!", GetID());
 		SetHP(GetMaxHP());
 		SetAlive(true);
-		SetActive(false);
+		{
+			bool expected{ false };
+			m_isActive.compare_exchange_strong(expected, true);
+		}
 		SetState(MOVING_OBJECT_STATE::IDLE);
 		m_target.reset();
 
@@ -353,7 +417,7 @@ std::vector<Pos> Monster::DoAstar()
 				openSet.push({ neighbor, tentativeG, fScore });
 				cameFrom[neighbor] = current.pos;
 			}
-		}	
+		}
 	}
 
 	return{};
@@ -397,10 +461,10 @@ void Monster::Trace()
 void Monster::RandomMove()
 {
 	// 20x20 위치를 자유롭게...
-	static constexpr int MOVE_RADIUS = 10;  
-	
+	static constexpr int MOVE_RADIUS = 10;
+
 	const Pos prevPos{ GetPos() };
-	
+
 	Pos nextPos{ prevPos };
 
 	switch(rand() % 4) {
@@ -426,8 +490,7 @@ void Monster::RandomMove()
 
 	if(std::abs(nextPos.x - prevPos.x) <= MOVE_RADIUS
 		&& std::abs(nextPos.y - prevPos.y) <= MOVE_RADIUS
-		&& MANAGER(Board)->CanGo(nextPos)) 
-	{
+		&& MANAGER(Board)->CanGo(nextPos)) {
 		auto oldSector = MANAGER(Board)->GetSector(prevPos);
 		auto newSector = MANAGER(Board)->GetSector(nextPos);
 
@@ -461,7 +524,7 @@ bool Monster::SearchTarget()
 
 			const Pos objPos = obj->GetPos();
 
-			if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos()), 11) {
+			if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos()), 5) {
 				m_target = std::static_pointer_cast<Player>(obj);
 				return true;
 			}

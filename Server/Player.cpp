@@ -140,6 +140,9 @@ void Player::Revive()
 
 		SetPos(m_startPos);
 		SetState(MOVING_OBJECT_STATE::IDLE);
+
+		std::println("{}번 플레이어 부활!", GetID());
+
 		unordered_set<int> nearList;
 		m_viewLock.lock();
 		auto oldViewList = m_viewList;

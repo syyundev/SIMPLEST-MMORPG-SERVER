@@ -52,7 +52,8 @@ void TaskQueue::ProcessTask() noexcept
 					{
 						EventContext* context = new EventContext;
 						context->type = task.taskType;
-						PostQueuedCompletionStatus(m_iocpHandle, 1, task.targetObjID, context);
+						context->ai_target_obj = task.targetObjID;
+						PostQueuedCompletionStatus(m_iocpHandle, 1, task.objID, context);
 						break;
 					}
 					case EVENT_TYPE::HEAL:

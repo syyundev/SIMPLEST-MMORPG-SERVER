@@ -90,7 +90,7 @@ void IOCPCore::ProcessIO()
 
 							bool keepAlive{ false };
 
-							auto sectorList = MANAGER(Board)->GetNeighborSectorList(pos);
+							const auto sectorList = MANAGER(Board)->GetNeighborSectorList(pos);
 
 							for(const int secID : sectorList) {
 								auto sector = MANAGER(Board)->GetSector(secID);
@@ -137,55 +137,10 @@ void IOCPCore::ProcessIO()
 						}
 
 						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
-							// TOOD: Monster Attacked
+							auto monster = std::static_pointer_cast<Monster>(obj);
+							monster->Attack(eventContext->ai_target_obj);
 						}
-						else if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
-							auto player = std::static_pointer_cast<Player>(obj);
-							if(player->IsAlive() == false) {
-								delete ioContext;
-								continue;
-							}
 
-							player->SubHP(10);
-
-							SC_OBJECT_STATE_PACKET sendPkt;
-							sendPkt.size = sizeof(sendPkt);
-							sendPkt.type = SC_OBJECT_STATE;
-							sendPkt.id = player->GetID();
-							sendPkt.objType = player->GetObjType();
-							sendPkt.hp = player->GetHP();
-							sendPkt.maxHP = player->GetMaxHP();
-							sendPkt.level = player->GetLevel();
-							sendPkt.exp = player->GetExp();
-							auto sendBuffer = make_shared<SendBuffer>();
-							sendBuffer->Append(sendPkt);
-							player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
-
-							const Pos pos = player->GetPos();
-
-							auto sectorList = MANAGER(Board)->GetNeighborSectorList(pos);
-
-							for(const int secID : sectorList) {
-								auto sector = MANAGER(Board)->GetSector(secID);
-
-								auto objList = sector->GetObjList();
-
-								for(const int objID : objList) {
-									auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
-
-									if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
-
-									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) continue;
-
-									if(MANAGER(Board)->CanSee(player->GetPos(), obj->GetPos())) {
-										auto sendBuffer = make_shared<SendBuffer>();
-										sendBuffer->Append(sendPkt);
-										std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
-									}
-								}
-							}
-
-						}
 						delete ioContext;
 						break;
 					}
@@ -321,11 +276,16 @@ void IOCPCore::ProcessIO()
 								if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
 									auto monster = std::static_pointer_cast<Monster>(obj);
 
+									// TODO: 이부분 뭔가 이상함.
+									
 									// PEACE_FIX면 나온다.
-									if(static_cast<MONSTER_TYPE>(monster->GetMonType()) == MONSTER_TYPE::PEACE_FIX)
+									if(static_cast<MONSTER_TYPE>(monster->GetMonType()) == MONSTER_TYPE::PEACE_FIX) {
+										cout << "나는 PEACE_FIX야" << endl;
 										break;
+									}
 
 									const Pos pos = monster->GetPos();
+
 
 									bool keepAlive{ false };
 
