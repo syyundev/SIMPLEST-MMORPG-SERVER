@@ -11,9 +11,6 @@
 Player::Player()
 	:MovingObject(OBJECT_TYPE::PLAYER), m_attackPower{10}
 {
-	static atomic<int> playerID{1};
-	SetID(playerID);
-	playerID++;
 }
 
 Player::~Player()

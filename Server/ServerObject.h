@@ -5,7 +5,7 @@ private:
 	// ServerObject
 	int					m_id;
 	Pos					m_pos;
-	SERVER_STATE				m_state;
+	SERVER_STATE		m_state;
 	string				m_name;
 	OBJECT_TYPE			m_type;
 

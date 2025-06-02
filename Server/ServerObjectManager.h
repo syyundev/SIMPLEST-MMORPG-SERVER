@@ -6,6 +6,7 @@ class ServerObject;
 class ServerObjectManager : public Singleton<ServerObjectManager> {
 	SINGLETON(ServerObjectManager)
 private:
+	mutex m_mutex;
 	concurrency::concurrent_unordered_map<int, std::atomic<shared_ptr<ServerObject>>> m_serverObject;
 
 public:

@@ -9,7 +9,7 @@
 #include "Session.h"
 
 Monster::Monster()
-	:MovingObject(OBJECT_TYPE::MONSTER), m_isActive(false)
+	:MovingObject(OBJECT_TYPE::MONSTER), m_isActive(false), m_moveCount{0}, m_flag{false}
 {
 	// 몬스터 아이디는 30000부터 시작
 	static int monsterID = 30000;
@@ -34,22 +34,23 @@ Monster::Monster()
 
 	monsterID++;
 
-#ifdef AI_LUA
-	auto L = m_luaState = luaL_newstate();
-	luaL_openlibs(L);
-	luaL_loadfile(L, "npc.lua");
-	lua_pcall(L, 0, 0, 0);
-
-	lua_getglobal(L, "set_uid");
-	lua_pushnumber(L, GetID());
-	lua_pcall(L, 1, 0, 0);
-
-	lua_register(L, "API_SendMessage", API_SendMessage);
-	lua_register(L, "API_get_x", API_get_x);
-	lua_register(L, "API_get_y", API_get_y);
-	lua_register(L, "API_RANDOM_X", API_get_random_x);
-	lua_register(L, "API_RANDOM_Y", API_get_random_y);
-#endif
+//#ifdef AI_LUA
+//	auto L = m_luaState = luaL_newstate();
+//	luaL_openlibs(L);
+//	luaL_loadfile(L, "npc.lua");
+//	lua_pcall(L, 0, 0, 0);
+//
+//	lua_getglobal(L, "set_uid");
+//	lua_pushnumber(L, GetID());
+//	lua_pcall(L, 1, 0, 0);
+//
+//	lua_register(L, "API_SendMessage", API_SendMessage);
+//	lua_register(L, "API_get_x", API_get_x);
+//	lua_register(L, "API_get_y", API_get_y);
+//	lua_register(L, "API_get_monster_move_count", API_get_monster_move_count);
+//	lua_register(L, "API_MonsterRandomMove", API_MonsterRandomMove);
+//	lua_register(L, "API_ResetMonsterMoveCount", API_ResetMonsterMoveCount);
+//#endif
 }
 
 Monster::~Monster()
@@ -81,7 +82,6 @@ void Monster::Move()
 				oldViewList.insert(objID);
 		}
 	}
-
 
 	switch(m_monType) {
 		case MONSTER_TYPE::PEACE_FIX:
@@ -131,6 +131,7 @@ void Monster::Move()
 		default:
 			break;
 	}
+
 #ifdef DEBUG
 	cout << "Monster MOVE!" << endl;
 #endif
@@ -262,7 +263,7 @@ void Monster::WakeUp(const int wakerID)
 #ifdef DEBUG
 		println("{} WakeUp!", GetID());
 #endif
-		MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s , EVENT_TYPE::MOVE, 0 });
+	MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s , EVENT_TYPE::MOVE, wakerID });
 	}
 }
 

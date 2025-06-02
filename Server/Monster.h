@@ -27,7 +27,10 @@ private:
 
 	atomic_bool				m_hurt;
 
+	atomic_int				m_moveCount;
+
 public:
+	atomic_bool				m_flag;
 	lua_State*				m_luaState;
 	mutex					m_ll;
 
@@ -36,13 +39,18 @@ public:
 	virtual ~Monster();
 
 public:
-	void SetTarget(weak_ptr<Player> target) { m_target = target; }
-	void SetActive(bool active) noexcept { m_isActive = active; }
-	bool IsActive() const noexcept { return m_isActive; }
+	void	SetTarget(weak_ptr<Player> target) { m_target = target; }
+	void	SetActive(bool active) noexcept { m_isActive = active; }
+	bool	IsActive() const noexcept { return m_isActive; }
+	void	AddMoveCount() noexcept { m_moveCount.fetch_add(1); }
+	int		GetMoveCount() const noexcept { return m_moveCount; }
+	void	ResetMoveCount() { m_moveCount = 0; }
 
 public:
 	void Move();
 	void WakeUp(const int wakerID);
+	void SetFlag(const bool flag) { m_flag = flag; }
+	bool GetFlag() const noexcept { return m_flag; }
 
 public:
 	unsigned char GetMonType() const noexcept { return static_cast<unsigned char>(m_monType); }

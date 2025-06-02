@@ -3,7 +3,7 @@ constexpr int BUF_SIZE = 200;
 constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 100;
 
-constexpr int MAX_USER = 10'000;
+constexpr int MAX_USER = 50'000;
 constexpr int MAX_NPC = 200'000;
 
 constexpr int W_WIDTH = 2'000;
@@ -40,6 +40,7 @@ struct CS_LOGIN_PACKET {
 	unsigned char size;
 	char	type;
 	char	name[NAME_SIZE];
+	int		id;
 };
 
 struct CS_MOVE_PACKET {
@@ -165,6 +166,7 @@ enum class EVENT_TYPE {
 	ATTACK,
 	HEAL,
 	REVIVE,
+	MONSTER_RANDOM_MOVE,
 
 	END
 };

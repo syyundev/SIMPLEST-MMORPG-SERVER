@@ -10,14 +10,32 @@
 #include "Monster.h"
 #include "TaskQueue.h"
 #include "Item.h"
+#include "DBManager.h"
 
 void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_LOGIN_PACKET& recvPkt)
 {
 	string name = recvPkt.name;
 
-	auto player = MANAGER(ServerObjectManager)->GetGameObject(name);
+	const int id = recvPkt.id;
+	
+	// TODO: DB에서 ID 정보들을 읽는다.
+	// 민약, ID가 존재하면 해당 ID와 위치좌표를 가져온다.
 
-	if(player != nullptr) {
+	// ID와 위치정보를 다시 클라이언트에게 준다.
+
+
+	// 플레이어가 종료할 때, DB에 해당 아이디에 위치를 DB에 써야 한다.
+	// 플레이어가 다시 접속했을 때는 해당 아이디 유저의 위치값을 읽어온다.
+	Pos tempPos;
+	bool ret = MANAGER(DBManager)->GetUserInfo(tempPos, recvPkt.id);
+	// bool ret = true;
+
+	Pos pos = tempPos;
+
+	//pos.x = randomPos(dre);
+	//pos.y = randomPos(dre);
+
+	if(false == ret) {
 		SC_LOGIN_FAIL_PACKET sendPkt;
 		sendPkt.size = sizeof(sendPkt);
 		sendPkt.type = SC_LOGIN_FAIL;
@@ -26,19 +44,26 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 		sendBuffer->Append(sendPkt);
 		session->RegistSend(std::move(sendBuffer));
 		return;
+
+		// MANAGER(DBManager)->AddUserInfo(id);
 	}
 
+	// MANAGER(DBManager)->SetUserInfo(recvPkt.id, pos);
+
 	auto myPlayer = make_shared<Player>();
+	myPlayer->SetID(id);
+
+
 #ifdef PLAYER_POS_FIX
 	Pos pos{ 2,2 };
 #else
-	Pos pos{};
-	while(true) {
-	pos = Pos{ randomPos(dre), randomPos(dre) };
-
-	if(MANAGER(Board)->CanGo(pos))
-		break;
-}
+//	Pos pos{};
+//	while(true) {
+//	pos = Pos{ randomPos(dre), randomPos(dre) };
+//
+//	if(MANAGER(Board)->CanGo(pos))
+//		break;
+//}
 #endif
 	MANAGER(Board)->GetSector(pos)->Add(myPlayer->GetID());
 
@@ -444,7 +469,7 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 	if(myPlayer == nullptr) return;
 
 	if(myPlayer->IsAlive() == false || myPlayer->GetServerState() != SERVER_STATE::ST_INGAME)
-	return;
+		return;
 
 	long long curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 #ifdef ATTACK_INTERVAL_1S

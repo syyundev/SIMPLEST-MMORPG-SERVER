@@ -15,3 +15,13 @@ function event_player_move(player)
       end
    end
 end
+
+function random_move(monster, player)
+    local move_count = API_get_monster_move_count(monster)
+    if (move_count < 3) then
+        API_MonsterRandomMove(monster)
+    else
+        API_SendMessage(monster, player, "BYE")
+    end
+end
+

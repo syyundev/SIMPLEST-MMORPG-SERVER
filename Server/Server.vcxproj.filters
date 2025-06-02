@@ -11,10 +11,10 @@
       <Filter>98. Headers</Filter>
     </ClCompile>
     <ClCompile Include="Session.cpp">
-      <Filter>02. ServerObjectManager\01. SessionManager\00. Session</Filter>
+      <Filter>01. SessionManager\00. Session</Filter>
     </ClCompile>
     <ClCompile Include="SessionManager.cpp">
-      <Filter>02. ServerObjectManager\01. SessionManager</Filter>
+      <Filter>01. SessionManager</Filter>
     </ClCompile>
     <ClCompile Include="IOContext.cpp">
       <Filter>02. IOContext</Filter>
@@ -59,9 +59,6 @@
     <ClCompile Include="ServerObjectManager.cpp">
       <Filter>02. ServerObjectManager</Filter>
     </ClCompile>
-    <ClCompile Include="MovingObject.cpp">
-      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject</Filter>
-    </ClCompile>
     <ClCompile Include="StaticObject.cpp">
       <Filter>02. ServerObjectManager\00. ServerObject\00. StaticObject</Filter>
     </ClCompile>
@@ -70,6 +67,12 @@
     </ClCompile>
     <ClCompile Include="func.cpp">
       <Filter>98. Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="MovingObject.cpp">
+      <Filter>02. ServerObjectManager\00. ServerObject\01. MovingObject</Filter>
+    </ClCompile>
+    <ClCompile Include="DBManager.cpp">
+      <Filter>95. DBManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -86,10 +89,10 @@
       <Filter>98. Headers</Filter>
     </ClInclude>
     <ClInclude Include="Session.h">
-      <Filter>02. ServerObjectManager\01. SessionManager\00. Session</Filter>
+      <Filter>01. SessionManager\00. Session</Filter>
     </ClInclude>
     <ClInclude Include="SessionManager.h">
-      <Filter>02. ServerObjectManager\01. SessionManager</Filter>
+      <Filter>01. SessionManager</Filter>
     </ClInclude>
     <ClInclude Include="RecvBuffer.h">
       <Filter>04. RecvBuffer</Filter>
@@ -148,6 +151,9 @@
     <ClInclude Include="func.h">
       <Filter>98. Headers</Filter>
     </ClInclude>
+    <ClInclude Include="DBManager.h">
+      <Filter>95. DBManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="02. Board">
@@ -189,12 +195,6 @@
     <Filter Include="02. ServerObjectManager\00. ServerObject">
       <UniqueIdentifier>{de86c58d-ef18-4020-ab0c-a5b42f750204}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. ServerObjectManager\01. SessionManager">
-      <UniqueIdentifier>{6c87b71b-e71f-4777-b5e4-436d853874fc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. ServerObjectManager\01. SessionManager\00. Session">
-      <UniqueIdentifier>{1e381732-2f63-4983-9478-dbc09905d1fc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="96. PacketFuncs">
       <UniqueIdentifier>{015dbab7-b3e8-4b72-8f04-ab682f8365a3}</UniqueIdentifier>
     </Filter>
@@ -221,6 +221,15 @@
     </Filter>
     <Filter Include="95. Script">
       <UniqueIdentifier>{42235137-07a1-42de-8cf4-f8b95f524689}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. DBManager">
+      <UniqueIdentifier>{939986e7-e626-4ed0-b1dd-175585e30991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager">
+      <UniqueIdentifier>{6c87b71b-e71f-4777-b5e4-436d853874fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager\00. Session">
+      <UniqueIdentifier>{1e381732-2f63-4983-9478-dbc09905d1fc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

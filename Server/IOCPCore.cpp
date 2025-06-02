@@ -51,13 +51,16 @@ void IOCPCore::ProcessIO()
 							continue;
 						}
 
-						if(obj->GetSeverState() != S_STATE::ST_INGAME) {
+						if(obj->GetServerState() != SERVER_STATE::ST_INGAME) {
 							delete ioContext;
 							continue;
 						}
 
 						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
 							auto monster = std::static_pointer_cast<Monster>(obj);
+							bool expected{ false };
+
+
 							monster->m_ll.lock();
 							auto L = monster->m_luaState;
 							lua_getglobal(L, "event_player_move");
@@ -112,6 +115,15 @@ void IOCPCore::ProcessIO()
 							}
 
 							if(keepAlive) {
+								// TODO: LUA
+							/*	monster->m_ll.lock();
+								auto L = monster->m_luaState;
+								lua_getglobal(L, "random_move");
+								lua_pushnumber(L, monster->GetID());
+								lua_pushnumber(L, eventContext->ai_target_obj);
+								lua_pcall(L, 2, 0, 0);
+								monster->AddMoveCount();
+								monster->m_ll.unlock();*/
 								monster->Move();
 								MANAGER(TaskQueue)->AddTask(Task{ monster->GetID(), std::chrono::high_resolution_clock::now() + 1s, EVENT_TYPE::MOVE, -1 });
 							}
@@ -195,7 +207,7 @@ void IOCPCore::ProcessIO()
 
 								if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
-								if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) continue;
+								if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) continue;
 
 								if(MANAGER(Board)->CanSee(player->GetPos(), obj->GetPos())) {
 									auto sendBuffer = make_shared<SendBuffer>();
@@ -224,6 +236,74 @@ void IOCPCore::ProcessIO()
 							auto player = std::static_pointer_cast<Player>(obj);
 							player->Revive();
 						}
+						break;
+					}
+					case EVENT_TYPE::MONSTER_RANDOM_MOVE:
+					{
+						const int id = static_cast<int>(key);
+						auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
+						if(obj == nullptr) {
+							delete ioContext;
+							continue;
+						}
+
+						if(obj->GetServerState() != SERVER_STATE::ST_INGAME) {
+							delete ioContext;
+							continue;
+						}
+
+						if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
+							auto monster = std::static_pointer_cast<Monster>(obj);
+
+							const Pos pos = monster->GetPos();
+
+							bool keepAlive{ false };
+
+							const auto sectorList = MANAGER(Board)->GetNeighborSectorList(pos);
+
+							for(const int secID : sectorList) {
+								auto sector = MANAGER(Board)->GetSector(secID);
+
+								const auto objList = sector->GetObjList();
+
+								for(const int objID : objList) {
+									auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+									if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
+
+									if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) continue;
+
+									if(MANAGER(Board)->CanSee(monster->GetPos(), obj->GetPos())) {
+										keepAlive = true;
+										break;
+									}
+								}
+							}
+
+							if(keepAlive) {
+								// monster->Move();
+								// TODO: LUA
+								monster->m_ll.lock();
+								auto L = monster->m_luaState;
+								lua_getglobal(L, "random_move");
+								lua_pushnumber(L, monster->GetID());
+								lua_pushnumber(L, eventContext->ai_target_obj);
+								lua_pcall(L, 2, 0, 0);
+								monster->AddMoveCount();
+								if(monster->GetMoveCount() < 4)
+									MANAGER(TaskQueue)->AddTask(Task{ monster->GetID(), std::chrono::high_resolution_clock::now() + 1s, EVENT_TYPE::MONSTER_RANDOM_MOVE,eventContext->ai_target_obj });
+								else {
+									bool expected{ true };
+									if(monster->m_flag.compare_exchange_strong(expected, false))
+										monster->ResetMoveCount();
+								}
+								monster->m_ll.unlock();
+							}
+							else {
+								monster->SetActive(false);
+							}
+						}
+						delete ioContext;
 						break;
 					}
 					default:
@@ -277,7 +357,7 @@ void IOCPCore::ProcessIO()
 									auto monster = std::static_pointer_cast<Monster>(obj);
 
 									// TODO: 이부분 뭔가 이상함.
-									
+
 									// PEACE_FIX면 나온다.
 									if(static_cast<MONSTER_TYPE>(monster->GetMonType()) == MONSTER_TYPE::PEACE_FIX) {
 										cout << "나는 PEACE_FIX야" << endl;

@@ -38,6 +38,8 @@ shared_ptr<ServerObject> ServerObjectManager::GetGameObject(const string_view na
 void ServerObjectManager::RemoveServerObject(const int id)
 {
 	m_serverObject.at(id) = nullptr;
+	lock_guard<mutex> lk{ m_mutex };
+	m_serverObject.unsafe_erase(id);
 }
 
 void ServerObjectManager::Broadcast()

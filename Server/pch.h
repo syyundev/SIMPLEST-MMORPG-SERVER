@@ -20,7 +20,7 @@ friend class Singleton;
 
 // #define PLAYER_POS_FIX
 #define MAX_MONSTER
-// S#define AI_LUA
+// #define AI_LUA
 
 #include <iostream>
 // STL
@@ -156,6 +156,9 @@ struct PacketHeader {
 };
 
 #include "protocol.h"
+
+#include <sqlext.h>  
+#include <locale.h>
 
 // constexpr int PORT_NUM = 4000;
 

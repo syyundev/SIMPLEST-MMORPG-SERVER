@@ -9,6 +9,7 @@
 #include "Sector.h"
 #include "Player.h"
 #include "ServerObjectManager.h"
+#include "DBManager.h"
 
 Session::Session(const SOCKET socket)
 	:m_socket(socket), m_recvBuffer(65535), mConnected{ false }, mSendRegistred{ false }, mServerState{ ST_FREE }
@@ -116,38 +117,45 @@ void Session::ProcessConnect()
 
 void Session::PostDisconnect()
 {
-	shared_ptr<Sector> sector = MANAGER(Board)->GetSector(Pos{ m_player->GetPos().x, m_player->GetPos().y });
-	sector->Remove(m_player->GetID());
-	MANAGER(ServerObjectManager)->RemoveServerObject(m_id);
-	mConnected = false;
+	if(m_player) {	
+		shared_ptr<Sector> sector = MANAGER(Board)->GetSector(Pos{ m_player->GetPos().x, m_player->GetPos().y });
+		sector->Remove(m_player->GetID());
 
-	MANAGER(SessionManager)->RemoveSession(m_id);
-	
-	m_player->m_viewLock.lock();
-	unordered_set<int> vl = m_player->m_viewList;
-	m_player->m_viewLock.unlock();
+		const int playerID = m_player->GetID();
+		const Pos playerPos = m_player->GetPos();
 
-	for(const int id : vl) {
-		shared_ptr<ServerObject> serverObject = MANAGER(ServerObjectManager)->GetGameObject(id);
+		MANAGER(DBManager)->SetUserInfo(playerID, playerPos);
 
-		if(serverObject == nullptr)
-			continue;
+		MANAGER(ServerObjectManager)->RemoveServerObject(playerID);
 
-		if(serverObject->GetServerState() != ST_INGAME)
-			continue;
+		m_player->m_viewLock.lock();
+		unordered_set<int> vl = m_player->m_viewList;
+		m_player->m_viewLock.unlock();
 
-		if(static_cast<OBJECT_TYPE>(serverObject->GetObjType()) != OBJECT_TYPE::PLAYER)
-			continue;
+		for(const int id : vl) {
 
-		SC_REMOVE_OBJECT_PACKET sendPkt;
-		sendPkt.size = sizeof(sendPkt);
-		sendPkt.type = SC_REMOVE_OBJECT;
-		sendPkt.id = m_id;
-		sendPkt.objType = serverObject->GetObjType();
-		auto sendBuffer = std::make_shared<SendBuffer>();
-		sendBuffer->Append(sendPkt);
-		std::static_pointer_cast<Player>(serverObject)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+			shared_ptr<ServerObject> serverObject = MANAGER(ServerObjectManager)->GetGameObject(id);
+			
+			if(id == playerID) continue;
+
+			if(serverObject == nullptr || serverObject->GetServerState() != ST_INGAME)
+				continue;
+
+			if(static_cast<OBJECT_TYPE>(serverObject->GetObjType()) != OBJECT_TYPE::PLAYER)
+				continue;
+
+			SC_REMOVE_OBJECT_PACKET sendPkt;
+			sendPkt.size = sizeof(sendPkt);
+			sendPkt.type = SC_REMOVE_OBJECT;
+			sendPkt.id = playerID;
+			sendPkt.objType = m_player->GetObjType();
+			auto sendBuffer = std::make_shared<SendBuffer>();
+			sendBuffer->Append(sendPkt);
+			std::static_pointer_cast<Player>(serverObject)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+		}
 	}
+	mConnected = false;
+	MANAGER(SessionManager)->RemoveSession(m_id);
 }
 
 int Session::ProcessData(const char* const buffer, const int len)
