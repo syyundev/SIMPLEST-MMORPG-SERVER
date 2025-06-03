@@ -118,13 +118,11 @@ void Session::ProcessConnect()
 void Session::PostDisconnect()
 {
 	if(m_player) {	
+		const int playerID = m_player->GetID();
+		MANAGER(DBManager)->SetUserInfo(playerID);
+
 		shared_ptr<Sector> sector = MANAGER(Board)->GetSector(Pos{ m_player->GetPos().x, m_player->GetPos().y });
 		sector->Remove(m_player->GetID());
-
-		const int playerID = m_player->GetID();
-		const Pos playerPos = m_player->GetPos();
-
-		MANAGER(DBManager)->SetUserInfo(playerID, playerPos);
 
 		MANAGER(ServerObjectManager)->RemoveServerObject(playerID);
 

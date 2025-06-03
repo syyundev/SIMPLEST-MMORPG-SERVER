@@ -17,64 +17,41 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 	string name = recvPkt.name;
 
 	const int id = recvPkt.id;
-	
-	// TODO: DB에서 ID 정보들을 읽는다.
-	// 민약, ID가 존재하면 해당 ID와 위치좌표를 가져온다.
 
-	// ID와 위치정보를 다시 클라이언트에게 준다.
+	auto myPlayer = MANAGER(DBManager)->GetUserInfo(recvPkt.id);
 
+	if(nullptr == myPlayer) {
+		// myPlayer가 nullptr인 경우
+		// 1. DB에 해당 ID가 존재하지 않을 때
+		// 2. 누군가 해당 ID를 사용중일 때 
 
-	// 플레이어가 종료할 때, DB에 해당 아이디에 위치를 DB에 써야 한다.
-	// 플레이어가 다시 접속했을 때는 해당 아이디 유저의 위치값을 읽어온다.
-	Pos tempPos;
-	bool ret = MANAGER(DBManager)->GetUserInfo(tempPos, recvPkt.id);
-	// bool ret = true;
+		auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
 
-	Pos pos = tempPos;
+		if(obj == nullptr) {
+			myPlayer = MANAGER(DBManager)->AddUserInfo(id, recvPkt.name);
+		}
+		else {
+			SC_LOGIN_FAIL_PACKET sendPkt;
+			sendPkt.size = sizeof(sendPkt);
+			sendPkt.type = SC_LOGIN_FAIL;
 
-	//pos.x = randomPos(dre);
-	//pos.y = randomPos(dre);
+			auto sendBuffer = make_shared<SendBuffer>();
+			sendBuffer->Append(sendPkt);
+			session->RegistSend(std::move(sendBuffer));
+			return;
+		}
+	}
+	else {
 
-	if(false == ret) {
-		SC_LOGIN_FAIL_PACKET sendPkt;
-		sendPkt.size = sizeof(sendPkt);
-		sendPkt.type = SC_LOGIN_FAIL;
-
-		auto sendBuffer = make_shared<SendBuffer>();
-		sendBuffer->Append(sendPkt);
-		session->RegistSend(std::move(sendBuffer));
-		return;
-
-		// MANAGER(DBManager)->AddUserInfo(id);
 	}
 
-	// MANAGER(DBManager)->SetUserInfo(recvPkt.id, pos);
-
-	auto myPlayer = make_shared<Player>();
-	myPlayer->SetID(id);
-
-
-#ifdef PLAYER_POS_FIX
-	Pos pos{ 2,2 };
-#else
-//	Pos pos{};
-//	while(true) {
-//	pos = Pos{ randomPos(dre), randomPos(dre) };
-//
-//	if(MANAGER(Board)->CanGo(pos))
-//		break;
-//}
-#endif
-	MANAGER(Board)->GetSector(pos)->Add(myPlayer->GetID());
+	MANAGER(Board)->GetSector(myPlayer->GetPos())->Add(myPlayer->GetID());
 
 	myPlayer->SetOwnerSession(session);
 	session->SetPlayer(myPlayer);
-	myPlayer->SetName(recvPkt.name);
-	myPlayer->SetPos(pos);
-	myPlayer->SetStartPos(pos);
 	myPlayer->SetServerState(SERVER_STATE::ST_INGAME);
 	myPlayer->SetDir(DIRECTION_TYPE::LEFT);
-	MANAGER(Board)->GetSector(pos)->Add(myPlayer->GetID());
+	MANAGER(Board)->GetSector(myPlayer->GetPos())->Add(myPlayer->GetID());
 
 	// 나에게 정보 보내주기.
 	{
@@ -87,7 +64,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 		sendPkt.dir = myPlayer->GetDir();
 		memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
 		sendPkt.name[myPlayer->GetName().size()] = 0;
-		
+
 		sendPkt.hp = myPlayer->GetHP();
 		sendPkt.max_hp = myPlayer->GetMaxHP();
 		sendPkt.exp = myPlayer->GetExp();
@@ -109,7 +86,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 		// 3. 해당 위치에 해당하는 섹터들의 목록을 들고온다.
 		// 4. 들고 온 섹터들 목록을 돌면서 각 섹터가 들고 있는 오브젝트들을 가져온다.
 
-		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(pos);
+		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(myPlayer->GetPos());
 
 		for(const int secID : neighborSecList) {
 			auto sector = MANAGER(Board)->GetSector(secID);
@@ -123,7 +100,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 
 				if(obj->GetID() == myPlayer->GetID()) continue;
 
-				if(false == MANAGER(Board)->CanSee(pos, obj->GetPos())) continue;
+				if(false == MANAGER(Board)->CanSee(myPlayer->GetPos(), obj->GetPos())) continue;
 
 				switch(auto type = static_cast<OBJECT_TYPE>(obj->GetObjType())) {
 					case OBJECT_TYPE::PLAYER:
@@ -134,8 +111,8 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 						sendPkt.size = sizeof(sendPkt);
 						sendPkt.type = SC_ADD_OBJECT;
 						sendPkt.id = myPlayer->GetID();
-						sendPkt.x = pos.x;
-						sendPkt.y = pos.y;
+						sendPkt.x = myPlayer->GetPos().x;
+						sendPkt.y = myPlayer->GetPos().y;
 						memcpy(sendPkt.name, myPlayer->GetName().data(), myPlayer->GetName().size());
 						sendPkt.name[myPlayer->GetName().size()] = 0;
 						sendPkt.objType = myPlayer->GetObjType();
@@ -192,7 +169,7 @@ void Process_CS_LOGIN_PACKET(const std::shared_ptr<Session>& session, const CS_L
 						sendPkt.exp = m->GetExp();
 						sendPkt.level = m->GetLevel();
 					}
-					
+
 					myPlayer->InsertViewList(obj->GetID());
 
 					auto sendBuffer = make_shared<SendBuffer>();
@@ -224,7 +201,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 	}
 #endif
 
-	if(myPlayer->IsAlive() == false )
+	if(myPlayer->IsAlive() == false)
 		return;
 
 	const Pos prevPos{ myPlayer->GetPos() };
@@ -474,7 +451,7 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 	long long curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 #ifdef ATTACK_INTERVAL_1S
 	long long prevAttackTime = myPlayer->GetLastAttackTime();
-	
+
 	if(curTime - prevAttackTime < 1000) {
 		cout << "아직 못 공격해!\n";
 		return;
@@ -525,7 +502,7 @@ void Process_CS_ITEM_PICK_UP_PACKET(const std::shared_ptr<Session>& session, con
 		return;
 
 	const Pos myPos = myPlayer->GetPos();
-	
+
 	auto sectorList = MANAGER(Board)->GetNeighborSectorList(myPos);
 
 	for(const int sectorID : sectorList) {
@@ -581,7 +558,7 @@ void Process_CS_ITEM_PICK_UP_PACKET(const std::shared_ptr<Session>& session, con
 				// Item을 먹었으면 아이템은 맵에서 사라져야 한다.
 				// 1. Sector에서 삭제
 				// 2. ServerObjectManager에서 삭제
-		
+
 
 				{
 					auto sectorList = MANAGER(Board)->GetNeighborSectorList(item->GetPos());
@@ -591,7 +568,7 @@ void Process_CS_ITEM_PICK_UP_PACKET(const std::shared_ptr<Session>& session, con
 
 						for(const int objID : objList) {
 							auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
-							
+
 							if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
 
 							if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;

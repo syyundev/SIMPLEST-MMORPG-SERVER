@@ -15,7 +15,7 @@
 
 bool ServerManager::Init()
 {
-	if(false == MANAGER(DBManager)->Connect())
+	if(false == MANAGER(DBManager)->Connect(L"2021184022_TP_ODBC"))
 		return false;
 
 	MANAGER(SessionManager)->Init();
