@@ -144,8 +144,8 @@ std::shared_ptr<Player> DBManager::AddUserInfo(const int id, const std::string_v
 	Pos pos{-1, -1 };
 
 	while(true) {
-		// pos = Pos{ playerSpawnPos(dre), playerSpawnPos(dre) };
-		pos = Pos{ randomPos(dre), randomPos(dre) };
+		pos = Pos{ playerSpawnPos(dre), playerSpawnPos(dre) };
+		// pos = Pos{ randomPos(dre), randomPos(dre) };
 
 		if(MANAGER(Board)->CanGo(pos))
 			break;

@@ -640,6 +640,7 @@ void Process_CS_TELEPORT_PACKET(const std::shared_ptr<Session>& session, const C
 
 	auto oldSector = MANAGER(Board)->GetSector(player->GetPos());
 	player->SetPos(tpPos);
+	player->SetStartPos(tpPos);
 	auto newSector = MANAGER(Board)->GetSector(player->GetPos());
 
 	if(oldSector != newSector) {
