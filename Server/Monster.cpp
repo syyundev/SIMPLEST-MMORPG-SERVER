@@ -11,19 +11,19 @@
 Monster::Monster()
 	:MovingObject(OBJECT_TYPE::MONSTER), m_isActive(false), m_moveCount{0}, m_flag{false}
 {
-	// 몬스터 아이디는 30000부터 시작
-	static int monsterID = 30000;
+	// 몬스터 아이디는 50'0000부터 시작
+	static int monsterID = 50'0000;
 	SetID(monsterID);
 
-	if(monsterID < 80'000) {
+	if(monsterID < 550'000) {
 		m_monType = MONSTER_TYPE::PEACE_FIX;
 		SetName("M_PF_" + to_string(monsterID));
 	}
-	else if(monsterID < 130'000) {
+	else if(monsterID < 600'000) {
 		m_monType = MONSTER_TYPE::PEACE_ROAMING;
 		SetName("M_PR_" + to_string(monsterID));
 	}
-	else if(monsterID < 180'000) {
+	else if(monsterID < 650'000) {
 		m_monType = MONSTER_TYPE::AGRO_FIX;
 		SetName("M_AF_" + to_string(monsterID));
 	}
@@ -212,9 +212,9 @@ void Monster::Move()
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 			auto player = std::static_pointer_cast<Player>(obj);
 			if(newViewList.find(objID) == newViewList.end()) {
-				player->m_viewLock.lock();
+				player->m_viewLock.lock_shared();
 				if(player->m_viewList.find(GetID()) != player->m_viewList.end()) {
-					player->m_viewLock.unlock();
+					player->m_viewLock.unlock_shared();
 
 					player->DeleteViewList(objID);
 
@@ -229,7 +229,7 @@ void Monster::Move()
 					player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
 				}
 				else {
-					player->m_viewLock.unlock();
+					player->m_viewLock.unlock_shared();
 				}
 			}
 		}

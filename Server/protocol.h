@@ -1,3 +1,4 @@
+#pragma once
 constexpr int PORT_NUM = 4000;
 constexpr int BUF_SIZE = 200;
 constexpr int NAME_SIZE = 20;
@@ -35,6 +36,12 @@ constexpr char SC_OBJECT_STATE = 10;
 
 constexpr int VIEW_RANGE = 7; // TEST
 
+constexpr int MONSTER_START_ID = 50'0000;
+
+constexpr short PLAYER_SPAWN_POS_X = 0;
+constexpr short PLAYER_SPAWN_POS_Y = 0;
+
+
 #pragma pack (push, 1)
 struct CS_LOGIN_PACKET {
 	unsigned char size;
@@ -63,6 +70,18 @@ struct CS_ITEM_PICK_UP_PACKET {
 	int		id;
 };
 
+// 플레이어는 접속 시 마을 리스폰 지점에 생성되어야 함
+// 하지만, 동접 테스트 할 때는 HotSpot 부하가 크므로
+// TP PACKET을 보내줘야 함.
+
+// 동접 테스트 할 때 
+// 시작마을의 HOTSPOT을 방지하기 위해
+// RANDOM TELEPORT할 때 사용 
+struct CS_TELEPORT_PACKET {
+	unsigned char	size;
+	char			type;
+};
+
 struct SC_LOGIN_INFO_PACKET {
 	unsigned char size;
 	char	type;
@@ -79,6 +98,8 @@ struct SC_LOGIN_INFO_PACKET {
 struct SC_LOGIN_FAIL_PACKET {
 	unsigned char size;
 	char	type;
+	int		id;
+	char reason;
 };
 
 struct SC_MOVE_OBJECT_PACKET {

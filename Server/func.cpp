@@ -227,9 +227,9 @@ int API_MonsterRandomMove(lua_State* L)
 			auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
 			auto player = std::static_pointer_cast<Player>(obj);
 			if(newViewList.find(objID) == newViewList.end()) {
-				player->m_viewLock.lock();
+				player->m_viewLock.lock_shared();
 				if(player->m_viewList.find(monster->GetID()) != player->m_viewList.end()) {
-					player->m_viewLock.unlock();
+					player->m_viewLock.unlock_shared();
 
 					player->DeleteViewList(objID);
 
@@ -244,7 +244,7 @@ int API_MonsterRandomMove(lua_State* L)
 					player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
 				}
 				else {
-					player->m_viewLock.unlock();
+					player->m_viewLock.unlock_shared();
 				}
 			}
 		}

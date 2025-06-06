@@ -310,6 +310,7 @@ void print_error_message(int s_err);
 
 extern std::default_random_engine dre;
 extern std::uniform_int_distribution<short> randomPos;
+extern std::uniform_int_distribution<short> playerSpawnPos;
 #include "PacketFunc.h"
 #include "SendBuffer.h"
 #include "..\Include\lua.hpp"

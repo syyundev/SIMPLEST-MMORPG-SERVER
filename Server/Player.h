@@ -12,7 +12,7 @@ public:
 	Pos					m_startPos;
 
 	mutex				m_pLock;
-	mutex				m_viewLock;
+	shared_mutex		m_viewLock;
 	unordered_set<int>	m_viewList;
 
 

@@ -19,13 +19,13 @@ Player::~Player()
 
 void Player::InsertViewList(const int id)
 {
-	lock_guard<mutex> lk{ m_viewLock };
+	lock_guard<shared_mutex> lk{ m_viewLock };
 	m_viewList.insert(id);
 }
 
 void Player::DeleteViewList(const int id)
 {
-	lock_guard<mutex> lk{ m_viewLock };
+	lock_guard<shared_mutex> lk{ m_viewLock };
 	if(m_viewList.find(id) != m_viewList.end())
 		m_viewList.erase(id);
 }
@@ -141,9 +141,9 @@ void Player::Revive()
 		std::println("{}번 플레이어 부활!", GetID());
 
 		unordered_set<int> nearList;
-		m_viewLock.lock();
+		m_viewLock.lock_shared();
 		auto oldViewList = m_viewList;
-		m_viewLock.unlock();
+		m_viewLock.unlock_shared();
 
 		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
 
@@ -208,9 +208,9 @@ void Player::Revive()
 				{
 					auto player = std::static_pointer_cast<Player>(obj);
 
-					player->m_viewLock.lock();
+					player->m_viewLock.lock_shared();
 					if(player->m_viewList.end() != player->m_viewList.find(GetID())) {
-						player->m_viewLock.unlock();
+						player->m_viewLock.unlock_shared();
 
 						// 상대에게 move packet 보내주기
 						SC_MOVE_OBJECT_PACKET sendPkt;
@@ -243,7 +243,7 @@ void Player::Revive()
 						}
 					}
 					else {
-						player->m_viewLock.unlock();
+						player->m_viewLock.unlock_shared();
 
 						SC_ADD_OBJECT_PACKET sendPkt;
 						sendPkt.size = sizeof(sendPkt);

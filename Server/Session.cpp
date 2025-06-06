@@ -126,9 +126,9 @@ void Session::PostDisconnect()
 
 		MANAGER(ServerObjectManager)->RemoveServerObject(playerID);
 
-		m_player->m_viewLock.lock();
+		m_player->m_viewLock.lock_shared();
 		unordered_set<int> vl = m_player->m_viewList;
-		m_player->m_viewLock.unlock();
+		m_player->m_viewLock.unlock_shared();
 
 		for(const int id : vl) {
 
@@ -207,6 +207,11 @@ void Session::ProcessPacket(const char* const buffer, const int packetSize)
 		case CS_ITEM_PICK_UP:
 		{
 			Process_CS_ITEM_PICK_UP_PACKET(std::static_pointer_cast<Session>(shared_from_this()), *(reinterpret_cast<const CS_ITEM_PICK_UP_PACKET*>(buffer)));
+			break;
+		}
+		case CS_TELEPORT:
+		{
+			Process_CS_TELEPORT_PACKET(std::static_pointer_cast<Session>(shared_from_this()), *(reinterpret_cast<const CS_TELEPORT_PACKET*>(buffer)));
 			break;
 		}
 		default:

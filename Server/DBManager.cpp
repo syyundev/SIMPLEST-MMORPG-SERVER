@@ -2,6 +2,7 @@
 #include "DBManager.h"
 #include "Player.h"
 #include "ServerObjectManager.h"
+#include "Board.h"
 
 bool DBManager::Connect(const wstring_view odbcName)
 {
@@ -23,7 +24,7 @@ bool DBManager::Connect(const wstring_view odbcName)
 				if(retCode == SQL_SUCCESS || retCode == SQL_SUCCESS_WITH_INFO) {
 					retCode = SQLAllocHandle(SQL_HANDLE_STMT, m_hdbc, &m_hstmt);
 
-					std::cout << "SUCCESS\n";
+					std::cout << "DB Connect SUCCESS\n";
 				}
 			}
 		}
@@ -82,7 +83,17 @@ std::shared_ptr<Player> DBManager::GetUserInfo(const int id)
 	if(retCode == SQL_SUCCESS || retCode == SQL_SUCCESS_WITH_INFO) {
 
 		auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
-		if(obj != nullptr) return nullptr;
+
+		if(obj == nullptr) {
+			SQLCloseCursor(m_hstmt);
+			return nullptr;
+		}
+		else {
+			if(id < 0 || id >= MONSTER_START_ID || static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
+				SQLCloseCursor(m_hstmt);
+				return nullptr;
+			}
+		}
 
 		auto player = make_shared<Player>();
 
@@ -114,7 +125,7 @@ std::shared_ptr<Player> DBManager::GetUserInfo(const int id)
 
 		if(retCode == SQL_NO_DATA) {
 			SQLCloseCursor(m_hstmt);
-			return nullptr;	
+			return player;	
 		}
 		// 데이터 읽은 뒤 커서 닫기
 		SQLCloseCursor(m_hstmt);
@@ -130,8 +141,16 @@ std::shared_ptr<Player> DBManager::GetUserInfo(const int id)
 
 std::shared_ptr<Player> DBManager::AddUserInfo(const int id, const std::string_view name)
 {
-	// 기본 게임 데이터들은 데이터 sheet에서 파싱해서 가져온다.
-	Pos pos{ randomPos(dre), randomPos(dre) };
+	Pos pos{-1, -1 };
+
+	while(true) {
+		// pos = Pos{ playerSpawnPos(dre), playerSpawnPos(dre) };
+		pos = Pos{ randomPos(dre), randomPos(dre) };
+
+		if(MANAGER(Board)->CanGo(pos))
+			break;
+	}
+
 	wstring nameStr{ name.begin(), name.end() };
 	int exp{};
 	int level{1};

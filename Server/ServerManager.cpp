@@ -29,21 +29,21 @@ bool ServerManager::Init()
 #endif
 	cout << monsterCount << "개의 몬스터 생성 시작..." << endl;
 
-	//for(int i = 0; i < monsterCount; ++i) {
-	//	auto monster = make_shared<Monster>();
-	//	Pos pos{1,1};
-	//	while(true) {
-	//		pos = Pos{randomPos(dre), randomPos(dre) };
-	//		
-	//		if(MANAGER(Board)->CanGo(pos))
-	//			break;
-	//	}
-	//	monster->SetPos(pos);
-	//	monster->SetServerState(ST_INGAME);
-	//	auto sector = MANAGER(Board)->GetSector(monster->GetPos());
-	//	sector->Add(monster->GetID());
-	//	MANAGER(ServerObjectManager)->AddServerObject(std::move(monster));
-	//}
+	for(int i = 0; i < monsterCount; ++i) {
+		auto monster = make_shared<Monster>();
+		Pos pos{1,1};
+		while(true) {
+			pos = Pos{randomPos(dre), randomPos(dre) };
+			
+			if(MANAGER(Board)->CanGo(pos))
+				break;
+		}
+		monster->SetPos(pos);
+		monster->SetServerState(ST_INGAME);
+		auto sector = MANAGER(Board)->GetSector(monster->GetPos());
+		sector->Add(monster->GetID());
+		MANAGER(ServerObjectManager)->AddServerObject(std::move(monster));
+	}
 	cout << monsterCount << "개의 몬스터 생성 완료!" << endl;
 
 	if(false == MANAGER(ThreadPool)->Init())
@@ -62,6 +62,8 @@ bool ServerManager::Init()
 
 	if(false == mListener->Init())
 		return false;
+
+	std::cout << "Server Start!" << std::endl;
 
 	return true;
 }
