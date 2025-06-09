@@ -82,17 +82,23 @@ std::shared_ptr<Player> DBManager::GetUserInfo(const int id)
 
 	if(retCode == SQL_SUCCESS || retCode == SQL_SUCCESS_WITH_INFO) {
 
-		auto obj = MANAGER(ServerObjectManager)->GetGameObject(id);
+		// DB에 데이터가 존재한다
+		
+		// auto obj = std::static_pointer_cast<Player>(MANAGER(ServerObjectManager)->GetGameObject(id));
 
-		if(obj == nullptr) {
+		//if(obj == nullptr) {
+		//	// DB에 존재하지만, 현재 서버에 로그인되어있지는 않다.
+		//	SQLCloseCursor(m_hstmt);
+		//	return nullptr;
+		//}
+		//else {
+		//	// DB에 존재하고, 서버에 로그인 되어있다.
+		//
+		//}
+
+		if(id < 0 || id >= MONSTER_START_ID) {
 			SQLCloseCursor(m_hstmt);
 			return nullptr;
-		}
-		else {
-			if(id < 0 || id >= MONSTER_START_ID || static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::PLAYER) {
-				SQLCloseCursor(m_hstmt);
-				return nullptr;
-			}
 		}
 
 		auto player = make_shared<Player>();
@@ -125,7 +131,7 @@ std::shared_ptr<Player> DBManager::GetUserInfo(const int id)
 
 		if(retCode == SQL_NO_DATA) {
 			SQLCloseCursor(m_hstmt);
-			return player;	
+			return nullptr;	
 		}
 		// 데이터 읽은 뒤 커서 닫기
 		SQLCloseCursor(m_hstmt);
