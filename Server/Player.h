@@ -3,7 +3,7 @@
 #include "MovingObject.h"
 
 class Session;
-
+	
 class Player : public MovingObject {
 private:
 	weak_ptr<Session>	m_ownerSession;

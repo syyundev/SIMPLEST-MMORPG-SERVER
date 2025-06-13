@@ -35,6 +35,8 @@ void Player::Attack(const int targetID)
 	auto monster = std::static_pointer_cast<Monster>(MANAGER(ServerObjectManager)->GetGameObject(targetID));
 	const Pos monsterPos = monster->GetPos();
 
+	SetState(MOVING_OBJECT_STATE::ATTACK);
+
 	if(monster == nullptr)
 		return;
 
@@ -80,6 +82,7 @@ void Player::Attack(const int targetID)
 		sendPkt.maxHP =GetMaxHP();
 		sendPkt.level = GetLevel();
 		sendPkt.exp = GetExp();
+		sendPkt.state = static_cast<unsigned char>(GetState());
 		auto sendBuffer = make_shared<SendBuffer>();
 		sendBuffer->Append(sendPkt);
 		m_ownerSession.lock()->RegistSend(std::move(sendBuffer));
@@ -95,6 +98,7 @@ void Player::Attack(const int targetID)
 	sendPkt.maxHP = monster->GetMaxHP();
 	sendPkt.level = monster->GetLevel();
 	sendPkt.exp = monster->GetExp();
+	sendPkt.state = static_cast<unsigned char>(monster->GetState());
 	auto sendBuffer = make_shared<SendBuffer>();
 	sendBuffer->Append(sendPkt);
 	m_ownerSession.lock()->RegistSend(std::move(sendBuffer));
@@ -121,8 +125,9 @@ void Player::Attack(const int targetID)
 				}
 			}
 		}
-
 	}
+
+	SetState(MOVING_OBJECT_STATE::IDLE);
 }
 
 void Player::Revive()
@@ -135,7 +140,16 @@ void Player::Revive()
 		SetExp(exp);
 		SetHP(GetMaxHP());
 
+		auto oldSector = MANAGER(Board)->GetSector(GetPos());
 		SetPos(m_startPos);
+		auto newSector = MANAGER(Board)->GetSector(GetPos());
+
+		if(oldSector != newSector) {
+			const int id = GetID();
+			oldSector->Remove(id);
+			newSector->Add(id);
+		}
+
 		SetState(MOVING_OBJECT_STATE::IDLE);
 
 		std::println("{}번 플레이어 부활!", GetID());
@@ -175,6 +189,7 @@ void Player::Revive()
 			sendPkt.maxHP = GetMaxHP();
 			sendPkt.exp = GetExp();
 			sendPkt.level = GetLevel();
+			sendPkt.state = static_cast<unsigned char>(GetState());
 			auto sendBuffer = make_shared<SendBuffer>();
 			sendBuffer->Append(sendPkt);
 			GetOwnerSession()->RegistSend(std::move(sendBuffer));
@@ -237,6 +252,7 @@ void Player::Revive()
 							sendPkt.maxHP = GetMaxHP();
 							sendPkt.exp = GetExp();
 							sendPkt.level = GetLevel();
+							sendPkt.state = static_cast<unsigned char>(GetState());
 							auto sendBuffer = make_shared<SendBuffer>();
 							sendBuffer->Append(sendPkt);
 							player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
@@ -259,7 +275,7 @@ void Player::Revive()
 						sendPkt.maxHP = GetMaxHP();
 						sendPkt.exp = GetExp();
 						sendPkt.level = GetLevel();
-
+						sendPkt.state = static_cast<unsigned char>(GetState());
 						player->InsertViewList(GetID());
 
 						auto sendBuffer = make_shared<SendBuffer>();
@@ -295,6 +311,7 @@ void Player::Revive()
 					sendPkt.maxHP = p->GetMaxHP();
 					sendPkt.exp = p->GetExp();
 					sendPkt.level = p->GetLevel();
+					sendPkt.state = static_cast<unsigned char>(p->GetState());
 				}
 				else if(static_cast<OBJECT_TYPE>(obj->GetObjType()) == OBJECT_TYPE::MONSTER) {
 					auto m = std::static_pointer_cast<Monster>(obj);
@@ -303,6 +320,7 @@ void Player::Revive()
 					sendPkt.maxHP = m->GetMaxHP();
 					sendPkt.exp = m->GetExp();
 					sendPkt.level = m->GetLevel();
+					sendPkt.state = static_cast<unsigned char>(m->GetState());
 				}
 				InsertViewList(objID);
 

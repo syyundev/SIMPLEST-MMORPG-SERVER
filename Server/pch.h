@@ -15,11 +15,11 @@ friend class Singleton;
 #define ENABLE_SPACE_DEVISION
 #define _CRT_SECURE_NO_WARNINGS
 
-// #define MOVE_INTERVAL_1S
-// #define ATTACK_INTERVAL_1S
+#define MOVE_INTERVAL_1S
+#define ATTACK_INTERVAL_1S
 
 // #define PLAYER_POS_FIX
-#define MAX_MONSTER
+// #define MAX_MONSTER
 // #define AI_LUA
 
 #include <iostream>
@@ -163,6 +163,9 @@ struct PacketHeader {
 // constexpr int PORT_NUM = 4000;
 
 using namespace  std;
+
+constexpr auto MONSTER_RESPAWN_TIME = std::chrono::seconds(30);
+constexpr auto PLAYER_RESPAWN_TIME = std::chrono::seconds(5);
 
 extern inline constinit thread_local unsigned int TLS_ThreadID = 0;
 

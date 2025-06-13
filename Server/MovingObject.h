@@ -7,7 +7,7 @@ private:
 	long long				m_lastAttackTime;
 	DIRECTION_TYPE			m_dir;
 	
-	MOVING_OBJECT_STATE		m_state;
+	atomic<MOVING_OBJECT_STATE>		m_state;
 
 protected:
 	atomic_bool				m_alive;
@@ -40,10 +40,10 @@ public:
 	MOVING_OBJECT_STATE		GetState() const noexcept { return m_state; }
 
 public:
-	int				GetLevel() const noexcept { return m_stat.level; }
-	long long		GetLastMoveTime() const noexcept { return m_lastMoveTime; }
-	long long		GetLastAttackTime() const noexcept { return m_lastAttackTime; }
-	char			GetDir() const noexcept { return static_cast<char>(m_dir); }
+	int						GetLevel() const noexcept { return m_stat.level; }
+	long long				GetLastMoveTime() const noexcept { return m_lastMoveTime; }
+	long long				GetLastAttackTime() const noexcept { return m_lastAttackTime; }
+	char					GetDir() const noexcept { return static_cast<char>(m_dir); }
 
 public:
 	virtual void			Attack(const int targetID) {}

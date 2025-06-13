@@ -11,7 +11,7 @@ struct PosHash {
 struct Node {
 	Pos pos;
 	int g; // 시작부터 이 노드까지의 실제 비용
-	int f; // g + 휴리스틱 비용
+	int f; 
 	auto operator<=> (const Node& o) const noexcept { return f <=> o.f; }
 };
 

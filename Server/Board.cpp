@@ -19,7 +19,7 @@ void Board::Make()
 	cout << "¸Ê »ý¼º ½ÃÀÛ..." << endl;
 	set<Pos> tempPos;
 
-	std::ifstream ifs{ "map.bin", std::ios::binary };
+	std::ifstream ifs{ "Data\\map.bin", std::ios::binary };
 
 	if(!ifs) {
 		cout << "File Read Error\n";

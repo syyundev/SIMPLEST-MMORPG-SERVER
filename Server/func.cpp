@@ -150,7 +150,7 @@ int API_MonsterRandomMove(lua_State* L)
 	}
 
 
-	monster->SetState(MOVING_OBJECT_STATE::MOVE);
+	// monster->SetState(MOVING_OBJECT_STATE::WALK);
 
 	unordered_set<int> newViewList;
 	{

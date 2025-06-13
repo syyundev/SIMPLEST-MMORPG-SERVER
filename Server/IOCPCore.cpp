@@ -190,6 +190,7 @@ void IOCPCore::ProcessIO()
 						sendPkt.maxHP = player->GetMaxHP();
 						sendPkt.level = player->GetLevel();
 						sendPkt.exp = player->GetExp();
+						sendPkt.state = static_cast<unsigned char>(player->GetState());
 						auto sendBuffer = make_shared<SendBuffer>();
 						sendBuffer->Append(sendPkt);
 						player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
@@ -434,6 +435,7 @@ void IOCPCore::ProcessIO()
 									sendPkt.maxHP = player->GetMaxHP();
 									sendPkt.level = player->GetLevel();
 									sendPkt.exp = player->GetExp();
+									sendPkt.state = static_cast<unsigned char>(player->GetState());
 									auto sendBuffer = make_shared<SendBuffer>();
 									sendBuffer->Append(sendPkt);
 									player->GetOwnerSession()->RegistSend(std::move(sendBuffer));

@@ -60,14 +60,11 @@ struct CS_MOVE_PACKET {
 struct CS_ATTACK_PACKET {
 	unsigned char size;
 	char	type;
-	int		id;
-	long long attack_time;
 };
 
 struct CS_ITEM_PICK_UP_PACKET {
 	unsigned char size;
 	char	type;
-	int		id;
 };
 
 // 플레이어는 접속 시 마을 리스폰 지점에 생성되어야 함
@@ -120,14 +117,14 @@ struct SC_ADD_OBJECT_PACKET {
 	unsigned char	objType;
 	char			dir;
 	
-	// ITEM도 오브젝트 인데, 아래의 값이 필요할까? 그냥 쓸까? 
-	// -> 그냥 쓰자 
 	int				hp;
 	int				maxHP;
 	int				exp;
 	int				level;
 
 	unsigned char	detail;
+
+	unsigned char	state;
 };
 
 struct SC_REMOVE_OBJECT_PACKET {
@@ -146,6 +143,7 @@ struct SC_OBJECT_STATE_PACKET {
 	int				maxHP;
 	int				exp;
 	int				level;
+	unsigned char	state=99;
 };
 
 struct SC_CHAT_PACKET {
@@ -228,7 +226,8 @@ enum class DIRECTION_TYPE : char {
 
 enum class MOVING_OBJECT_STATE : unsigned char {
 	IDLE,
-	MOVE,
+	WALK,
+	ATTACK,
 	DEAD,
 
 	END

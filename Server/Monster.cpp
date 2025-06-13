@@ -12,18 +12,21 @@ Monster::Monster()
 	:MovingObject(OBJECT_TYPE::MONSTER), m_isActive(false), m_moveCount{0}, m_flag{false}
 {
 	// 몬스터 아이디는 50'0000부터 시작
-	static int monsterID = 50'0000;
+	static int monsterID = MONSTER_START_ID;
 	SetID(monsterID);
 
-	if(monsterID < 550'000) {
+	// 4 3 2 1
+	// 8 6 4 2
+
+	if(monsterID < 580'000) {
 		m_monType = MONSTER_TYPE::PEACE_FIX;
 		SetName("M_PF_" + to_string(monsterID));
 	}
-	else if(monsterID < 600'000) {
+	else if(monsterID < 640'000) {
 		m_monType = MONSTER_TYPE::PEACE_ROAMING;
 		SetName("M_PR_" + to_string(monsterID));
 	}
-	else if(monsterID < 650'000) {
+	else if(monsterID < 68'0000) {
 		m_monType = MONSTER_TYPE::AGRO_FIX;
 		SetName("M_AF_" + to_string(monsterID));
 	}
@@ -135,7 +138,7 @@ void Monster::Move()
 #ifdef DEBUG
 	cout << "Monster MOVE!" << endl;
 #endif
-	SetState(MOVING_OBJECT_STATE::MOVE);
+	// SetState(MOVING_OBJECT_STATE::WALK);
 
 	unordered_set<int> newViewList;
 	{
@@ -182,6 +185,7 @@ void Monster::Move()
 				sendPkt.maxHP = GetMaxHP();
 				sendPkt.exp = GetExp();
 				sendPkt.level = GetLevel();
+				sendPkt.state = static_cast<unsigned char>(GetState());
 				player->InsertViewList(GetID());
 				auto sendBuffer = make_shared<SendBuffer>();
 				sendBuffer->Append(sendPkt);
@@ -246,7 +250,10 @@ void Monster::Move()
 
 void Monster::WakeUp(const int wakerID)
 {
-	MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1ms, EVENT_TYPE::HELLO, wakerID });
+	// MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1ms, EVENT_TYPE::HELLO, wakerID });
+
+	if(GetState() == MOVING_OBJECT_STATE::DEAD)
+		return;
 
 	if(IsAlive() == false)
 		return;
@@ -263,7 +270,7 @@ void Monster::WakeUp(const int wakerID)
 #ifdef DEBUG
 		println("{} WakeUp!", GetID());
 #endif
-	MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 1s , EVENT_TYPE::MOVE, wakerID });
+	MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 500ms , EVENT_TYPE::MOVE, wakerID });
 	}
 }
 
@@ -284,6 +291,46 @@ void Monster::Attack(const int targetID)
 	if(target->GetHP() == 0)
 		m_target.reset();
 
+	// SetState(MOVING_OBJECT_STATE::ATTACK);
+
+	{
+		SC_OBJECT_STATE_PACKET sendPkt;
+		sendPkt.size = sizeof(sendPkt);
+		sendPkt.type = SC_OBJECT_STATE;
+		sendPkt.id = GetID();
+		sendPkt.hp = GetHP();
+		sendPkt.maxHP = GetMaxHP();
+		sendPkt.exp = GetExp();
+		sendPkt.level = GetLevel();
+		sendPkt.objType = GetObjType();
+		sendPkt.state = static_cast<unsigned char>(GetState());
+
+		// 주변 애들에게 정보 보내주기
+		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
+
+		for(const int secID : neighborSecList) {
+			auto sector = MANAGER(Board)->GetSector(secID);
+
+			auto objList = sector->GetObjList();
+
+			for(const int objID : objList) {
+				auto obj = MANAGER(ServerObjectManager)->GetGameObject(objID);
+
+				if(obj == nullptr || obj->GetServerState() != ST_INGAME) continue;
+
+				if(OBJECT_TYPE::PLAYER != static_cast<OBJECT_TYPE>(obj->GetObjType())) continue;
+
+				if(MANAGER(Board)->CanSee(GetPos(), obj->GetPos())) {
+					auto player = std::static_pointer_cast<Player>(obj);
+
+					auto sendBuffer = make_shared<SendBuffer>();
+					sendBuffer->Append(sendPkt);
+					player->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+				}
+			}
+		}	
+	}
+
 	SC_OBJECT_STATE_PACKET sendPkt;
 	sendPkt.size = sizeof(sendPkt);
 	sendPkt.type = SC_OBJECT_STATE;
@@ -293,6 +340,7 @@ void Monster::Attack(const int targetID)
 	sendPkt.maxHP = target->GetMaxHP();
 	sendPkt.level = target->GetLevel();
 	sendPkt.exp = target->GetExp();
+	sendPkt.state = static_cast<unsigned char>(target->GetState());
 	auto sendBuffer = make_shared<SendBuffer>();
 	sendBuffer->Append(sendPkt);
 	target->GetOwnerSession()->RegistSend(std::move(sendBuffer));
@@ -336,6 +384,7 @@ void Monster::Revive()
 			bool expected{ false };
 			m_isActive.compare_exchange_strong(expected, true);
 		}
+		
 		SetState(MOVING_OBJECT_STATE::IDLE);
 		m_target.reset();
 
@@ -348,7 +397,8 @@ void Monster::Revive()
 		sendPkt.maxHP = GetMaxHP();
 		sendPkt.exp = GetExp();
 		sendPkt.level = GetLevel();
-
+		sendPkt.state = static_cast<unsigned char>(GetState());
+		
 		auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
 
 		for(const int secID : neighborSecList) {
@@ -438,6 +488,7 @@ std::vector<Pos> Monster::reconstructPath(const std::unordered_map<Pos, Pos, Pos
 
 void Monster::Trace()
 {
+	// SetState(MOVING_OBJECT_STATE::WALK);
 	auto path = DoAstar();
 
 	Pos prevPos = GetPos();
@@ -461,6 +512,7 @@ void Monster::Trace()
 
 void Monster::RandomMove()
 {
+	// SetState(MOVING_OBJECT_STATE::WALK);
 	// 20x20 위치를 자유롭게...
 	static constexpr int MOVE_RADIUS = 10;
 

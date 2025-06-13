@@ -31,7 +31,6 @@ void MovingObject::SetExp(const int exp) noexcept
 {
 }
 
-
 void MovingObject::AddExp(const int amount) noexcept
 {
 	m_stat.exp += amount;
@@ -54,9 +53,6 @@ void MovingObject::SubHP(const int amount) noexcept
 		return;
 	}
 
-	// 죽은 상태 
-	SetState(MOVING_OBJECT_STATE::DEAD);
-
 	switch(auto type = static_cast<OBJECT_TYPE>(GetObjType())) {
 		case OBJECT_TYPE::PLAYER:
 		{
@@ -66,6 +62,7 @@ void MovingObject::SubHP(const int amount) noexcept
 			if(false == m_alive.compare_exchange_strong(expected, false))
 				return;
 
+			SetState(MOVING_OBJECT_STATE::DEAD);
 			SC_OBJECT_STATE_PACKET sendPkt;
 			sendPkt.size = sizeof(sendPkt);
 			sendPkt.type = SC_OBJECT_STATE;
@@ -74,6 +71,15 @@ void MovingObject::SubHP(const int amount) noexcept
 			sendPkt.maxHP = GetMaxHP();
 			sendPkt.exp = GetExp();
 			sendPkt.level = GetLevel();
+			sendPkt.state = static_cast<unsigned char>(GetState());
+
+			{
+				auto sendBuffer = make_shared<SendBuffer>();
+				sendBuffer->Append(sendPkt);
+				auto myPlayer = std::static_pointer_cast<Player>(MANAGER(ServerObjectManager)->GetGameObject(GetID()));
+				if(nullptr != myPlayer)
+					myPlayer->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+			}
 			
 			auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
 
@@ -100,7 +106,7 @@ void MovingObject::SubHP(const int amount) noexcept
 			}
 
 			cout << std::format("{}번 플레이어 사망!\n", GetID());
-			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, EVENT_TYPE::REVIVE, 0 });
+			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + PLAYER_RESPAWN_TIME, EVENT_TYPE::REVIVE, 0 });
 			break;
 		}
 		case OBJECT_TYPE::MONSTER:
@@ -160,6 +166,8 @@ void MovingObject::SubHP(const int amount) noexcept
 			if(false == m_alive.compare_exchange_strong(expected, false))
 				return;
 
+			SetState(MOVING_OBJECT_STATE::DEAD);
+			
 			SC_OBJECT_STATE_PACKET sendPkt;
 			sendPkt.size = sizeof(sendPkt);
 			sendPkt.type = SC_OBJECT_STATE;
@@ -167,8 +175,10 @@ void MovingObject::SubHP(const int amount) noexcept
 			sendPkt.hp = GetHP();
 			sendPkt.maxHP = GetMaxHP();
 			sendPkt.exp = GetExp();
-			sendPkt.level = GetLevel();
-
+			sendPkt.level = GetLevel();	
+			sendPkt.objType = GetObjType();
+			sendPkt.state = static_cast<unsigned char>(GetState());
+				
 			// 주변 애들에게 정보 보내주기
 			auto neighborSecList = MANAGER(Board)->GetNeighborSectorList(GetPos());
 
@@ -194,7 +204,7 @@ void MovingObject::SubHP(const int amount) noexcept
 				}
 			}
 
-			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + 5s, EVENT_TYPE::REVIVE, 0 });
+			MANAGER(TaskQueue)->AddTask(Task{ GetID(), std::chrono::high_resolution_clock::now() + MONSTER_RESPAWN_TIME, EVENT_TYPE::REVIVE, 0 });
 			break;
 		}
 		default:
