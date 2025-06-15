@@ -17,12 +17,13 @@ Monster::Monster()
 
 	// 4 3 2 1
 	// 8 6 4 2
+	// 10 5 3 2
 
-	if(monsterID < 580'000) {
+	if(monsterID < 600'000) {
 		m_monType = MONSTER_TYPE::PEACE_FIX;
 		SetName("M_PF_" + to_string(monsterID));
 	}
-	else if(monsterID < 640'000) {
+	else if(monsterID < 650'000) {
 		m_monType = MONSTER_TYPE::PEACE_ROAMING;
 		SetName("M_PR_" + to_string(monsterID));
 	}
@@ -438,9 +439,10 @@ std::vector<Pos> Monster::DoAstar()
 
 	static const Pos dirs[4] = { Pos{1,0}, Pos{-1,0}, Pos{0,1}, Pos{0,-1} };
 
+	// fScore가 작은 노드가 우선순위 죄상
 	std::priority_queue<Node, std::vector<Node>, std::greater<Node>> openSet;
-	std::unordered_map<Pos, int, PosHash> gScore;
-	std::unordered_map<Pos, Pos, PosHash> cameFrom;
+	std::unordered_map<Pos, int, PosHash> gScore;	// 각 Pos 까지의 최단 이동 비용 기록
+	std::unordered_map<Pos, Pos, PosHash> cameFrom;	// 경로 역추적, Pos 도달 시 바로 이전 Pos 저장함.
 
 	gScore[startPos] = 0;
 	openSet.push({ startPos, 0, heuristic(startPos, destPos) });
@@ -449,8 +451,9 @@ std::vector<Pos> Monster::DoAstar()
 		Node current = openSet.top();
 		openSet.pop();
 
+		// 현재 위치가 도착점이라면, 출발점부터 목적지까지 경로 벡터 재구성
 		if(current.pos == destPos)
-			return reconstructPath(cameFrom, current.pos);
+			return ReconstructPath(cameFrom, current.pos);
 
 		for(const Pos& d : dirs) {
 			Pos neighbor{ static_cast<short>(current.pos.x + d.x),
@@ -461,10 +464,10 @@ std::vector<Pos> Monster::DoAstar()
 			if(MANAGER(Board)->m_boards[neighbor.y][neighbor.x] == TILE_TYPE::OBSTACLE)
 				continue;
 
-			int tentativeG = current.g + 1;
+			const int tentativeG = current.g + 1;
 			if(!gScore.count(neighbor) || tentativeG < gScore[neighbor]) {
 				gScore[neighbor] = tentativeG;
-				int fScore = tentativeG + heuristic(neighbor, destPos);
+				const int fScore = tentativeG + heuristic(neighbor, destPos);
 				openSet.push({ neighbor, tentativeG, fScore });
 				cameFrom[neighbor] = current.pos;
 			}
@@ -474,7 +477,7 @@ std::vector<Pos> Monster::DoAstar()
 	return{};
 }
 
-std::vector<Pos> Monster::reconstructPath(const std::unordered_map<Pos, Pos, PosHash>& cameFrom, Pos current)
+std::vector<Pos> Monster::ReconstructPath(const std::unordered_map<Pos, Pos, PosHash>& cameFrom, Pos current)
 {
 	std::vector<Pos> path;
 	while(cameFrom.find(current) != cameFrom.end()) {

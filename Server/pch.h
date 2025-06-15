@@ -19,7 +19,7 @@ friend class Singleton;
 #define ATTACK_INTERVAL_1S
 
 // #define PLAYER_POS_FIX
-// #define MAX_MONSTER
+#define MAX_MONSTER
 // #define AI_LUA
 
 #include <iostream>

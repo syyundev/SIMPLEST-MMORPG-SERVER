@@ -10,7 +10,7 @@
 #include "Item.h"
 
 MovingObject::MovingObject(const OBJECT_TYPE type)
-	:ServerObject(type), m_lastMoveTime{ 0 }, m_dir(DIRECTION_TYPE::LEFT), m_lastAttackTime{ 0 }, m_alive{ true }, m_attackDamage{10}
+	:ServerObject(type), m_lastMoveTime{ 0 }, m_dir(DIRECTION_TYPE::LEFT), m_lastAttackTime{ 0 }, m_alive{ true }, m_attackDamage{10}, m_state(MOVING_OBJECT_STATE::IDLE)
 {
 	m_stat.hp = 100;
 	m_stat.maxHp = 100;

@@ -22,14 +22,14 @@ int API_SendMessage(lua_State* L)
 	if(obj == nullptr || obj->GetServerState() != ST_INGAME) return -1;
 	if(static_cast<OBJECT_TYPE>(obj->GetObjType()) != OBJECT_TYPE::PLAYER) return -1;
 	
-	SC_CHAT_PACKET sendPkt;
-	sendPkt.size = sizeof(sendPkt);
-	sendPkt.type = SC_CHAT;
-	sendPkt.id = my_id;
-	strcpy(sendPkt.chat, mess);
-	auto sendBuffer{ make_shared<SendBuffer>() };
-	sendBuffer->Append(sendPkt);
-	std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
+	//SC_CHAT_PACKET sendPkt;
+	//sendPkt.size = sizeof(sendPkt);
+	//sendPkt.type = SC_CHAT;
+	//sendPkt.id = my_id;
+	//strcpy(sendPkt.chat, mess);
+	//auto sendBuffer{ make_shared<SendBuffer>() };
+	//sendBuffer->Append(sendPkt);
+	//std::static_pointer_cast<Player>(obj)->GetOwnerSession()->RegistSend(std::move(sendBuffer));
 
 	cout << mess << endl;
 

@@ -60,7 +60,7 @@ public:
 
 private:
 	std::vector<Pos> DoAstar();
-	std::vector<Pos> reconstructPath(const std::unordered_map<Pos, Pos, PosHash>& cameFrom, Pos current);
+	std::vector<Pos> ReconstructPath(const std::unordered_map<Pos, Pos, PosHash>& cameFrom, Pos current);
 
 private:
 	void			Trace();

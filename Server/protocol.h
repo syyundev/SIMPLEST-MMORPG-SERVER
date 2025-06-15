@@ -130,7 +130,7 @@ struct SC_ADD_OBJECT_PACKET {
 struct SC_REMOVE_OBJECT_PACKET {
 	unsigned char	size;
 	char			type;
-	int				id;
+	int				id;	
 	unsigned char	objType;
 };
 
@@ -145,14 +145,6 @@ struct SC_OBJECT_STATE_PACKET {
 	int				level;
 	unsigned char	state=99;
 };
-
-struct SC_CHAT_PACKET {
-	unsigned char	size;
-	char			type;
-	int				id;
-	char			chat[CHAT_SIZE];
-};
-
 #pragma pack (pop)
 
 struct Pos {

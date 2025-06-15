@@ -32,12 +32,12 @@ bool ServerManager::Init()
 	for(int i = 0; i < monsterCount; ++i) {
 		auto monster = make_shared<Monster>();
 		Pos pos{1,1};
-		//while(true) {
-		//	pos = Pos{randomPos(dre), randomPos(dre) };
-		//	
-		//	if(MANAGER(Board)->CanGo(pos))
-		//		break;
-		//}
+		while(true) {
+			pos = Pos{randomPos(dre), randomPos(dre) };
+			
+			if(MANAGER(Board)->CanGo(pos))
+				break;
+		}
 		monster->SetPos(pos);
 		monster->SetServerState(ST_INGAME);
 		auto sector = MANAGER(Board)->GetSector(monster->GetPos());
