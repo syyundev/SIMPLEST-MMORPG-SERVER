@@ -55,7 +55,7 @@
     <ClCompile Include="ServerManager.cpp">
       <Filter>00. ServerManager</Filter>
     </ClCompile>
-    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="ServerObjectManager.cpp">
       <Filter>02. ServerObjectManager</Filter>
     </ClCompile>

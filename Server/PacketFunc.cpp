@@ -214,7 +214,7 @@ void Process_CS_MOVE_PACKET(const std::shared_ptr<Session>& session, const CS_MO
 
 	if(myPlayer->IsAlive() == false)
 		return;
-
+	
 	const Pos prevPos{ myPlayer->GetPos() };
 	Pos nextPos{ prevPos };
 
@@ -506,7 +506,7 @@ void Process_CS_ATTACK_PACKET(const std::shared_ptr<Session>& session, const CS_
 	long long prevAttackTime = myPlayer->GetLastAttackTime();
 
 	if(curTime - prevAttackTime < 1000) {
-		cout << "아직 못 공격해!\n";
+		// cout << "아직 못 공격해!\n";
 		return;
 	}
 #endif
@@ -609,7 +609,7 @@ void Process_CS_ITEM_PICK_UP_PACKET(const std::shared_ptr<Session>& session, con
 			auto item = std::static_pointer_cast<Item>(obj);
 
 			if(myPos == itemPos) {
-				cout << "아이템 먹고 체력 회복!" << endl;
+				// cout << "아이템 먹고 체력 회복!" << endl;
 				myPlayer->AddHP(10);
 
 				// 나에게 상태 정보 보내주기
@@ -923,5 +923,5 @@ void Process_CS_TELEPORT_PACKET(const std::shared_ptr<Session>& session, const C
 		}
 	}
 
-	println("{}번 플레이어 {},{} -> {},{} TP!", player->GetID(), prevPos.x, prevPos.y, tpPos.x, tpPos.y);
+	// println("{}번 플레이어 {},{} -> {},{} TP!", player->GetID(), prevPos.x, prevPos.y, tpPos.x, tpPos.y);
 }

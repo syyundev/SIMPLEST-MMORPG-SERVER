@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIMPLEST MMORPG Server Flow Chart</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #0f172a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --line: #64748b;
+      --backend: #34d399;
+      --backend-fill: rgba(6, 78, 59, 0.4);
+      --db: #a78bfa;
+      --db-fill: rgba(76, 29, 149, 0.4);
+      --bus: #fb923c;
+      --bus-fill: rgba(251, 146, 60, 0.3);
+      --external: #94a3b8;
+      --external-fill: rgba(30, 41, 59, 0.5);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(52, 211, 153, 0.08), transparent 34rem),
+        var(--bg);
+      color: var(--text);
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    main {
+      width: min(1220px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--backend);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--backend);
+      box-shadow: 0 0 14px var(--backend);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.55; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    .diagram-card {
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.72);
+      overflow: auto;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    svg {
+      display: block;
+      width: 1180px;
+      max-width: none;
+      height: auto;
+    }
+
+    .label {
+      fill: #f8fafc;
+      font-size: 12px;
+      font-weight: 600;
+      text-anchor: middle;
+    }
+
+    .sub {
+      fill: #94a3b8;
+      font-size: 9px;
+      text-anchor: middle;
+    }
+
+    .tiny {
+      fill: #cbd5e1;
+      font-size: 8px;
+      text-anchor: middle;
+    }
+
+    .section-title {
+      fill: #cbd5e1;
+      font-size: 10px;
+      font-weight: 600;
+      text-anchor: middle;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .card {
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.72);
+      padding: 14px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .card-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    footer {
+      margin-top: 14px;
+      color: #64748b;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 820px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>SIMPLEST MMORPG Server Flow Chart</h1>
+      <p class="subtitle">Windows IOCP server runtime flow: accept, session I/O, packet handling, sector sync, timer events, and DB persistence.</p>
+    </div>
+    <div class="status"><span class="dot"></span> C++ / IOCP / MMORPG SERVER</div>
+  </header>
+
+  <section class="diagram-card" aria-label="Server flow chart">
+    <svg viewBox="0 0 1180 860" role="img">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+        </pattern>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+        </marker>
+        <marker id="eventArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#fb923c"/>
+        </marker>
+        <marker id="dbArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa"/>
+        </marker>
+      </defs>
+
+      <rect width="1180" height="860" fill="#020617"/>
+      <rect width="1180" height="860" fill="url(#grid)" opacity="0.9"/>
+
+      <path d="M 122 118 L 190 118" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 330 118 L 390 118" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 530 118 L 590 118" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 730 118 L 790 118" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 930 118 L 990 118" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+
+      <path d="M 1060 158 C 1060 224, 875 224, 875 276" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 875 356 L 875 416" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 775 476 C 645 476, 645 530, 520 530" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 420 570 C 420 636, 250 636, 250 696" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 250 756 C 250 810, 1030 810, 1030 158" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+
+      <path d="M 665 476 C 665 570, 775 570, 775 632" stroke="#fb923c" stroke-width="1.6" marker-end="url(#eventArrow)" fill="none"/>
+      <path d="M 775 702 C 775 742, 950 742, 950 476" stroke="#fb923c" stroke-width="1.6" marker-end="url(#eventArrow)" fill="none"/>
+      <path d="M 530 476 C 500 622, 590 692, 650 692" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#eventArrow)" fill="none"/>
+      <path d="M 360 476 C 250 476, 250 580, 250 696" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#dbArrow)" fill="none"/>
+
+      <rect x="155" y="50" width="960" height="160" rx="12" fill="none" stroke="#34d399" stroke-width="1.2" stroke-dasharray="8,4" opacity="0.75"/>
+      <text x="635" y="74" class="section-title">NETWORK I/O PATH</text>
+
+      <rect x="160" y="246" width="790" height="280" rx="12" fill="none" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="8,4" opacity="0.75"/>
+      <text x="555" y="270" class="section-title">PACKET HANDLING AND WORLD STATE</text>
+
+      <rect x="620" y="606" width="360" height="140" rx="12" fill="none" stroke="#fb923c" stroke-width="1.2" stroke-dasharray="8,4" opacity="0.75"/>
+      <text x="800" y="630" class="section-title">SERVER TIMER EVENTS</text>
+
+      <g>
+        <rect x="36" y="88" width="86" height="60" rx="6" fill="#0f172a"/>
+        <rect x="36" y="88" width="86" height="60" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="79" y="112" class="label">Client</text>
+        <text x="79" y="130" class="sub">TCP socket</text>
+      </g>
+
+      <g>
+        <rect x="190" y="88" width="140" height="60" rx="6" fill="#0f172a"/>
+        <rect x="190" y="88" width="140" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="260" y="112" class="label">Listener</text>
+        <text x="260" y="130" class="sub">AcceptEx</text>
+      </g>
+
+      <g>
+        <rect x="390" y="88" width="140" height="60" rx="6" fill="#0f172a"/>
+        <rect x="390" y="88" width="140" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="460" y="112" class="label">IOCPCore</text>
+        <text x="460" y="130" class="sub">completion port</text>
+      </g>
+
+      <g>
+        <rect x="590" y="88" width="140" height="60" rx="6" fill="#0f172a"/>
+        <rect x="590" y="88" width="140" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="660" y="112" class="label">Session</text>
+        <text x="660" y="130" class="sub">connect state</text>
+      </g>
+
+      <g>
+        <rect x="790" y="88" width="140" height="60" rx="6" fill="#0f172a"/>
+        <rect x="790" y="88" width="140" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="860" y="112" class="label">PostRecv</text>
+        <text x="860" y="130" class="sub">WSARecv</text>
+      </g>
+
+      <g>
+        <rect x="990" y="88" width="140" height="60" rx="6" fill="#0f172a"/>
+        <rect x="990" y="88" width="140" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="1060" y="112" class="label">Recv Done</text>
+        <text x="1060" y="130" class="sub">GQCS callback</text>
+      </g>
+
+      <g>
+        <rect x="775" y="296" width="200" height="60" rx="6" fill="#0f172a"/>
+        <rect x="775" y="296" width="200" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="875" y="320" class="label">RecvBuffer</text>
+        <text x="875" y="338" class="sub">stream to packets</text>
+      </g>
+
+      <g>
+        <rect x="775" y="416" width="200" height="60" rx="6" fill="#0f172a"/>
+        <rect x="775" y="416" width="200" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="875" y="440" class="label">ProcessPacket</text>
+        <text x="875" y="458" class="sub">login/move/attack/item</text>
+      </g>
+
+      <g>
+        <rect x="520" y="416" width="155" height="60" rx="6" fill="#0f172a"/>
+        <rect x="520" y="416" width="155" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="597" y="440" class="label">PacketFunc</text>
+        <text x="597" y="458" class="sub">server authority</text>
+      </g>
+
+      <g>
+        <rect x="325" y="416" width="155" height="60" rx="6" fill="#0f172a"/>
+        <rect x="325" y="416" width="155" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="402" y="440" class="label">World State</text>
+        <text x="402" y="458" class="sub">Board/Sector/Object</text>
+      </g>
+
+      <g>
+        <rect x="180" y="696" width="140" height="60" rx="6" fill="#0f172a"/>
+        <rect x="180" y="696" width="140" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="250" y="720" class="label">SendQueue</text>
+        <text x="250" y="738" class="sub">batched WSABUF</text>
+      </g>
+
+      <g>
+        <rect x="650" y="662" width="250" height="60" rx="6" fill="#0f172a"/>
+        <rect x="650" y="662" width="250" height="60" rx="6" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1.5"/>
+        <text x="775" y="686" class="label">TaskQueue</text>
+        <text x="775" y="704" class="sub">move/attack/heal/revive</text>
+      </g>
+
+      <g>
+        <rect x="250" y="566" width="215" height="70" rx="6" fill="#0f172a"/>
+        <rect x="250" y="566" width="215" height="70" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="357" y="592" class="label">Sector Sync</text>
+        <text x="357" y="611" class="sub">viewList diff</text>
+        <text x="357" y="626" class="tiny">ADD / MOVE / REMOVE</text>
+      </g>
+
+      <g>
+        <rect x="1000" y="416" width="120" height="60" rx="6" fill="#0f172a"/>
+        <rect x="1000" y="416" width="120" height="60" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="1060" y="440" class="label">DBManager</text>
+        <text x="1060" y="458" class="sub">ODBC</text>
+      </g>
+
+      <g>
+        <rect x="1000" y="520" width="120" height="70" rx="6" fill="#0f172a"/>
+        <rect x="1000" y="520" width="120" height="70" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="1060" y="547" class="label">User Data</text>
+        <text x="1060" y="566" class="sub">pos/hp/exp/level</text>
+      </g>
+
+      <path d="M 1060 476 L 1060 520" stroke="#a78bfa" stroke-width="1.6" marker-end="url(#dbArrow)" fill="none"/>
+      <path d="M 1000 446 L 975 446" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#dbArrow)" fill="none"/>
+
+      <g>
+        <rect x="500" y="296" width="190" height="70" rx="6" fill="#0f172a"/>
+        <rect x="500" y="296" width="190" height="70" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="595" y="322" class="label">Game Logic</text>
+        <text x="595" y="341" class="sub">move/combat/item</text>
+        <text x="595" y="356" class="tiny">server validates state</text>
+      </g>
+
+      <g>
+        <rect x="240" y="296" width="190" height="70" rx="6" fill="#0f172a"/>
+        <rect x="240" y="296" width="190" height="70" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="335" y="322" class="label">Monster AI</text>
+        <text x="335" y="341" class="sub">wake/trace/attack</text>
+        <text x="335" y="356" class="tiny">A* pathfinding</text>
+      </g>
+
+      <path d="M 775 446 L 690 446" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 597 416 L 597 366" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 500 331 L 430 331" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 335 366 L 335 416" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 480 446 L 520 446" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrowhead)" fill="none"/>
+
+      <rect x="40" y="246" width="95" height="500" rx="12" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="8,4" opacity="0.7"/>
+      <text x="88" y="270" class="section-title">INIT</text>
+
+      <g>
+        <rect x="57" y="296" width="60" height="48" rx="6" fill="#0f172a"/>
+        <rect x="57" y="296" width="60" height="48" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+        <text x="87" y="317" class="tiny">DB</text>
+        <text x="87" y="332" class="tiny">Connect</text>
+      </g>
+      <g>
+        <rect x="57" y="376" width="60" height="48" rx="6" fill="#0f172a"/>
+        <rect x="57" y="376" width="60" height="48" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+        <text x="87" y="397" class="tiny">Board</text>
+        <text x="87" y="412" class="tiny">Make</text>
+      </g>
+      <g>
+        <rect x="57" y="456" width="60" height="48" rx="6" fill="#0f172a"/>
+        <rect x="57" y="456" width="60" height="48" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+        <text x="87" y="477" class="tiny">Spawn</text>
+        <text x="87" y="492" class="tiny">NPCs</text>
+      </g>
+      <g>
+        <rect x="57" y="536" width="60" height="48" rx="6" fill="#0f172a"/>
+        <rect x="57" y="536" width="60" height="48" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+        <text x="87" y="557" class="tiny">Thread</text>
+        <text x="87" y="572" class="tiny">Pool</text>
+      </g>
+      <g>
+        <rect x="57" y="616" width="60" height="48" rx="6" fill="#0f172a"/>
+        <rect x="57" y="616" width="60" height="48" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+        <text x="87" y="637" class="tiny">IOCP</text>
+        <text x="87" y="652" class="tiny">Start</text>
+      </g>
+
+      <path d="M 87 344 L 87 376" stroke="#64748b" stroke-width="1.2" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 87 424 L 87 456" stroke="#64748b" stroke-width="1.2" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 87 504 L 87 536" stroke="#64748b" stroke-width="1.2" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 87 584 L 87 616" stroke="#64748b" stroke-width="1.2" marker-end="url(#arrowhead)" fill="none"/>
+      <path d="M 117 640 C 148 640, 148 118, 190 118" stroke="#64748b" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrowhead)" fill="none"/>
+
+      <g>
+        <rect x="365" y="804" width="450" height="34" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+        <rect x="385" y="815" width="12" height="12" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399"/>
+        <text x="405" y="825" fill="#94a3b8" font-size="8">Server component</text>
+        <rect x="515" y="815" width="12" height="12" rx="2" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c"/>
+        <text x="535" y="825" fill="#94a3b8" font-size="8">Timer/event</text>
+        <rect x="625" y="815" width="12" height="12" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa"/>
+        <text x="645" y="825" fill="#94a3b8" font-size="8">Database</text>
+        <path d="M 730 821 L 768 821" stroke="#64748b" stroke-width="1.4" marker-end="url(#arrowhead)" fill="none"/>
+        <text x="790" y="825" fill="#94a3b8" font-size="8">Flow</text>
+      </g>
+    </svg>
+  </section>
+
+  <section class="cards">
+    <article class="card">
+      <div class="card-header"><span class="card-dot" style="background:#34d399"></span><h3>Network Core</h3></div>
+      <ul>
+        <li>Listener registers accepted sockets to IOCP.</li>
+        <li>Session posts overlapped recv/send requests.</li>
+        <li>Completion events are dispatched by worker threads.</li>
+      </ul>
+    </article>
+    <article class="card">
+      <div class="card-header"><span class="card-dot" style="background:#22d3ee"></span><h3>World Sync</h3></div>
+      <ul>
+        <li>Board is divided into sectors for nearby object queries.</li>
+        <li>View list differences produce add, move, remove packets.</li>
+        <li>Server validates movement, combat, items, HP, and EXP.</li>
+      </ul>
+    </article>
+    <article class="card">
+      <div class="card-header"><span class="card-dot" style="background:#fb923c"></span><h3>Async Events</h3></div>
+      <ul>
+        <li>TaskQueue schedules monster movement, attacks, healing, and revive.</li>
+        <li>Timed tasks are posted back into IOCP as event completions.</li>
+        <li>ODBC persists user state on login and disconnect paths.</li>
+      </ul>
+    </article>
+  </section>
+
+  <footer>Generated for SIMPLEST-MMORPG-SERVER portfolio documentation.</footer>
+</main>
+</body>
+</html>

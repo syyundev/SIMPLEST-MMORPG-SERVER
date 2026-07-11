@@ -36,7 +36,7 @@ void Board::Make()
 
 	for(int y = 0; y < m_boards.size(); ++y) {
 		for(int x = 0; x < m_boards[y].size(); ++x) {
-			Pos obstaclePos{ static_cast<short>(y),static_cast<short>(x) };
+			const Pos obstaclePos{ static_cast<short>(y),static_cast<short>(x) };
 			if(tempPos.find(obstaclePos) != tempPos.end()) {
 				m_boards[y][x] = TILE_TYPE::OBSTACLE;
 				//m_boards[y][x] = TILE_TYPE::ROAD;

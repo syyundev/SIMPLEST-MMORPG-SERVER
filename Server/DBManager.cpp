@@ -24,7 +24,7 @@ bool DBManager::Connect(const wstring_view odbcName)
 				if(retCode == SQL_SUCCESS || retCode == SQL_SUCCESS_WITH_INFO) {
 					retCode = SQLAllocHandle(SQL_HANDLE_STMT, m_hdbc, &m_hstmt);
 
-					std::cout << "DB Connect SUCCESS\n";
+					std::cout << "DB Connection SUCCESS\n";
 				}
 			}
 		}
